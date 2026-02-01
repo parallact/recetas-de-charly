@@ -35,7 +35,6 @@
       "mcp__supabase__apply_migration",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_wait_for",
-      "Bash(npm run dev:*)",
       "Bash(test:*)",
       "Bash(npm run lint)",
       "mcp__github__get_me",
@@ -44,7 +43,32 @@
       "Bash(gh workflow run:*)",
       "mcp__github__get_file_contents",
       "Bash(ls -la \"c:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\\\\.github\\\\workflows\"\" 2>/dev/null || echo \"Directory not found \")",
-      "mcp__supabase__list_migrations"
+      "mcp__supabase__list_migrations",
+      "mcp__github__list_branches",
+      "mcp__github__list_commits",
+      "mcp__supabase-las-recetas__list_tables",
+      "Bash(npx vercel:*)",
+      "Skill(ralph-loop:ralph-loop)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_resize",
+      "mcp__plugin_playwright_playwright__browser_snapshot",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "Bash(netstat:*)",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "Skill(ralph-loop:cancel-ralph)",
+      "Bash(find:*)",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --oneline -10)",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" show 53662e8 --stat)",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --all --oneline -- \".github/workflows/node.js.yml\")",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" show 53662e8:.github/workflows/node.js.yml)",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" remote -v)",
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --oneline origin/master -5)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }
