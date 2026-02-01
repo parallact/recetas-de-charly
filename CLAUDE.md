@@ -311,3 +311,12 @@ Required in `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
+
+---
+
+## Supabase MCP
+
+**IMPORTANTE:** Siempre usar el MCP de Supabase para interactuar con la base de datos (queries, migraciones, etc). NO usar el CLI de Supabase ni comandos bash.
+
+- Si el MCP no esta conectado, informar al usuario
+- Config en `.mcp.json` con project_ref: `jzqippyffpiielyqhyyg`
