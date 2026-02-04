@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Heart, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { getLikeStatus, toggleLike } from '@/lib/actions/likes'
 
 interface LikeButtonProps {
   recipeId: string
@@ -29,7 +29,6 @@ export function LikeButton({
   const [isLoading, setIsLoading] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
-  const supabase = createClient()
   const isMounted = useRef(true)
 
   useEffect(() => {
@@ -38,53 +37,21 @@ export function LikeButton({
   }, [])
 
   const checkLikeStatus = useCallback(async () => {
-    if (!supabase) {
-      setIsChecking(false)
-      return
-    }
-
-    // Get like count regardless of auth status
-    const { count } = await supabase
-      .from('recipe_likes')
-      .select('*', { count: 'exact', head: true })
-      .eq('recipe_id', recipeId)
+    const status = await getLikeStatus(recipeId)
 
     if (!isMounted.current) return
-    setLikeCount(count || 0)
 
-    // Check if current user has liked
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!isMounted.current) return
-
-    if (!user) {
-      setIsChecking(false)
-      return
-    }
-
-    setUserId(user.id)
-
-    const { data } = await supabase
-      .from('recipe_likes')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('recipe_id', recipeId)
-      .maybeSingle()
-
-    if (!isMounted.current) return
-    setIsLiked(!!data)
+    setLikeCount(status.count)
+    setIsLiked(status.isLiked)
+    setUserId(status.userId)
     setIsChecking(false)
-  }, [supabase, recipeId])
+  }, [recipeId])
 
   useEffect(() => {
     checkLikeStatus()
   }, [checkLikeStatus])
 
   const handleToggleLike = async () => {
-    if (!supabase) {
-      toast.error('Error de conexion')
-      return
-    }
-
     if (!userId) {
       toast.error('Debes iniciar sesion para dar like')
       return
@@ -101,25 +68,10 @@ export function LikeButton({
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1)
 
     try {
-      if (previousState) {
-        // Remove like
-        const { error } = await supabase
-          .from('recipe_likes')
-          .delete()
-          .eq('user_id', userId)
-          .eq('recipe_id', recipeId)
+      const result = await toggleLike(recipeId)
 
-        if (error) throw error
-      } else {
-        // Add like
-        const { error } = await supabase
-          .from('recipe_likes')
-          .insert({
-            user_id: userId,
-            recipe_id: recipeId,
-          })
-
-        if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error || 'Error al actualizar like')
       }
     } catch {
       // Revert optimistic update on error

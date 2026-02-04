@@ -16,7 +16,8 @@ import { LikeButton } from '@/components/recipes/like-button'
 import { ServingsScaler } from '@/components/recipes/servings-scaler'
 import { CookingMode } from '@/components/recipes/cooking-mode'
 import { RecipeNotes } from '@/components/recipes/recipe-notes'
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
+import { getUser } from '@/lib/auth/get-user'
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants'
 
 interface TagInfo {
@@ -49,136 +50,92 @@ interface FormattedRecipe {
   tags: TagInfo[]
 }
 
-// Types for Supabase joined queries
-interface ProfileJoin {
-  display_name: string | null
-  avatar_url: string | null
-}
+async function getRecipeById(id: string, userId?: string): Promise<FormattedRecipe | null> {
+  try {
+    // Build where clause based on auth status
+    const whereClause = userId
+      ? { id, OR: [{ is_public: true }, { user_id: userId }] }
+      : { id, is_public: true }
 
-interface IngredientJoin {
-  name: string
-}
+    const recipe = await prisma.recipes.findFirst({
+      where: whereClause,
+      include: {
+        users: {
+          include: {
+            profiles: true
+          }
+        },
+        recipe_ingredients: {
+          include: {
+            ingredients: true
+          },
+          orderBy: { order_index: 'asc' }
+        },
+        instructions: {
+          orderBy: { step_number: 'asc' }
+        },
+        recipe_categories: {
+          include: {
+            categories: true
+          }
+        },
+        recipe_tags: {
+          include: {
+            tags: true
+          }
+        }
+      }
+    })
 
-interface CategoryJoin {
-  name: string
-  icon: string | null
-}
+    if (!recipe) return null
 
-interface RecipeIngredientRow {
-  quantity: number | null
-  unit: string | null
-  order_index: number
-  ingredients: IngredientJoin | null
-}
+    // Format ingredients
+    const formattedIngredients = recipe.recipe_ingredients.map((ri) => ({
+      quantity: ri.quantity ? Number(ri.quantity) : null,
+      unit: ri.unit || '',
+      name: ri.ingredients?.name || '',
+    }))
 
-interface RecipeCategoryRow {
-  categories: CategoryJoin | null
-}
+    // Format instructions
+    const sortedInstructions = recipe.instructions.map((i) => i.content)
 
-interface TagJoin {
-  name: string
-}
+    // Format categories
+    const categories = recipe.recipe_categories
+      .map((rc) => rc.categories?.name || '')
+      .filter(Boolean)
 
-interface RecipeTagRow {
-  tags: TagJoin | null
-}
+    // Format tags
+    const tags = recipe.recipe_tags
+      .map((rt) => rt.tags)
+      .filter((tag): tag is NonNullable<typeof tag> => tag !== null)
+      .map(tag => ({ name: tag.name }))
 
+    // Get profile data
+    const profile = recipe.users?.profiles
 
-async function getRecipeById(id: string): Promise<FormattedRecipe | null> {
-  const supabase = await createClient()
-  if (!supabase) return null
-
-  // Get current user to allow viewing own recipes
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Single query with all JOINs - optimized from 4 queries to 1
-  let query = supabase
-    .from('recipes')
-    .select(`
-      *,
-      profiles:user_id (
-        display_name,
-        avatar_url
-      ),
-      recipe_ingredients (
-        quantity,
-        unit,
-        order_index,
-        ingredients (
-          name
-        )
-      ),
-      instructions (
-        step_number,
-        content
-      ),
-      recipe_categories (
-        categories (
-          name,
-          icon
-        )
-      ),
-      recipe_tags (
-        tags (
-          name
-        )
-      )
-    `)
-    .eq('id', id)
-
-  // If user is logged in, show public recipes OR their own
-  // If not logged in, show only public recipes
-  if (user) {
-    query = query.or(`is_public.eq.true,user_id.eq.${user.id}`)
-  } else {
-    query = query.eq('is_public', true)
-  }
-
-  const { data: recipe, error } = await query.single()
-
-  if (error || !recipe) return null
-
-  // Format ingredients with proper typing
-  const typedIngredients = recipe.recipe_ingredients as RecipeIngredientRow[] | null
-  const sortedIngredients = (typedIngredients || [])
-    .sort((a, b) => a.order_index - b.order_index)
-  const formattedIngredients = sortedIngredients.map((ri) => ({
-    quantity: ri.quantity,
-    unit: ri.unit || '',
-    name: ri.ingredients?.name || '',
-  }))
-
-  // Format instructions - sort by step_number
-  const typedInstructions = recipe.instructions as { step_number: number; content: string }[] | null
-  const sortedInstructions = (typedInstructions || [])
-    .sort((a, b) => a.step_number - b.step_number)
-    .map((i) => i.content)
-
-  // Format categories with proper typing
-  const typedCategories = recipe.recipe_categories as RecipeCategoryRow[] | null
-  const categories = (typedCategories || [])
-    .map((rc) => rc.categories?.name || '')
-    .filter(Boolean)
-
-  // Format tags with proper typing
-  const typedTags = recipe.recipe_tags as RecipeTagRow[] | null
-  const tags = (typedTags || [])
-    .map((rt) => rt.tags)
-    .filter((tag): tag is TagJoin => tag !== null)
-
-  // Get profile data with proper typing
-  const profile = recipe.profiles as ProfileJoin | null
-
-  return {
-    ...recipe,
-    author: {
-      name: profile?.display_name || 'Usuario',
-      avatar: profile?.avatar_url || null,
-    },
-    ingredients: formattedIngredients,
-    instructions: sortedInstructions,
-    categories,
-    tags,
+    return {
+      id: recipe.id,
+      title: recipe.title,
+      slug: recipe.slug,
+      description: recipe.description,
+      image_url: recipe.image_url,
+      cooking_time: recipe.cooking_time,
+      prep_time: recipe.prep_time,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty,
+      source_url: recipe.source_url,
+      imported_from: recipe.imported_from,
+      author: {
+        name: profile?.display_name || 'Usuario',
+        avatar: profile?.avatar_url || null,
+      },
+      ingredients: formattedIngredients,
+      instructions: sortedInstructions,
+      categories,
+      tags,
+    }
+  } catch {
+    return null
   }
 }
 
@@ -188,7 +145,8 @@ export default async function RecipeDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const recipe = await getRecipeById(id)
+  const user = await getUser()
+  const recipe = await getRecipeById(id, user?.id)
 
   if (!recipe) {
     notFound()

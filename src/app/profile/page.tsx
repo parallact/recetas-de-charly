@@ -29,10 +29,11 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
-import { ChefHat, Pencil, Bookmark, Heart, Calendar, Loader2, User, Lock, Eye, EyeOff } from 'lucide-react'
+import { ChefHat, Pencil, Bookmark, Heart, Calendar, Loader2, User } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { getUserProfile, updateUserProfile, getUserStats } from '@/lib/actions/profile'
 
 // Zod schema for profile validation
 const profileSchema = z.object({
@@ -67,17 +68,12 @@ interface Stats {
 
 export default function ProfilePage() {
   const router = useRouter()
-  // Singleton client - no memoization needed
-  const supabase = createClient()
+  const { data: session, status } = useSession()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<Stats>({ recipes: 0, bookmarks: 0, likes: 0 })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -92,89 +88,53 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      if (!supabase) {
-        setLoading(false)
-        return
-      }
+      if (status === 'loading') return
 
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
+      if (!session?.user) {
         toast.error('Debes iniciar sesion para ver tu perfil')
         router.push('/login')
         return
       }
 
-      // Load profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      const [profileResult, statsResult] = await Promise.all([
+        getUserProfile(),
+        getUserStats(),
+      ])
 
-      if (profileError) {
-        toast.error('Error al cargar el perfil')
+      if (!profileResult.success || !profileResult.data) {
+        toast.error(profileResult.error || 'Error al cargar el perfil')
         setLoading(false)
         return
       }
 
-      const loadedProfile = {
-        ...profileData,
-        email: user.email || '',
-      }
-      setProfile(loadedProfile)
+      setProfile(profileResult.data)
+      setStats(statsResult)
 
       formReset({
-        display_name: profileData.display_name || '',
-        avatar_url: profileData.avatar_url || '',
-        bio: profileData.bio || '',
-      })
-
-      // Get stats in parallel
-      const [recipeResult, bookmarkResult, likeResult] = await Promise.all([
-        supabase
-          .from('recipes')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id),
-        supabase
-          .from('bookmarks')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id),
-        supabase
-          .from('recipe_likes')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id),
-      ])
-
-      setStats({
-        recipes: recipeResult.count || 0,
-        bookmarks: bookmarkResult.count || 0,
-        likes: likeResult.count || 0,
+        display_name: profileResult.data.display_name || '',
+        avatar_url: profileResult.data.avatar_url || '',
+        bio: profileResult.data.bio || '',
       })
 
       setLoading(false)
     }
 
     loadProfile()
-  }, [supabase, router, formReset])
+  }, [session, status, router, formReset])
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
-    if (!supabase || !profile) return
+    if (!profile) return
 
     setSaving(true)
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        display_name: data.display_name?.trim() || null,
-        avatar_url: data.avatar_url?.trim() || null,
-        bio: data.bio?.trim() || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', profile.id)
+    const result = await updateUserProfile({
+      display_name: data.display_name,
+      avatar_url: data.avatar_url,
+      bio: data.bio,
+    })
 
-    if (error) {
-      toast.error('Error al guardar los cambios')
+    if (!result.success) {
+      toast.error(result.error || 'Error al guardar los cambios')
     } else {
       toast.success('Perfil actualizado')
       setProfile({
@@ -188,46 +148,9 @@ export default function ProfilePage() {
     }
 
     setSaving(false)
-  }, [supabase, profile, router])
+  }, [profile, router])
 
-  const handleChangePassword = useCallback(async () => {
-    if (!supabase) return
-
-    // Validate
-    if (newPassword.length < 6) {
-      toast.error('La contrasena debe tener al menos 6 caracteres')
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error('Las contrasenas no coinciden')
-      return
-    }
-
-    setChangingPassword(true)
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword
-    })
-
-    if (error) {
-      if (error.message.includes('same_password')) {
-        toast.error('La nueva contrasena debe ser diferente a la actual')
-      } else if (error.message.includes('weak_password')) {
-        toast.error('La contrasena es demasiado debil')
-      } else {
-        toast.error('Error al cambiar la contrasena')
-      }
-    } else {
-      toast.success('Contrasena actualizada correctamente')
-      setNewPassword('')
-      setConfirmPassword('')
-    }
-
-    setChangingPassword(false)
-  }, [supabase, newPassword, confirmPassword])
-
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="container mx-auto max-w-4xl px-4 py-8">
         <Card className="overflow-hidden">
@@ -330,7 +253,7 @@ export default function ProfilePage() {
                             <FormItem className="flex justify-center">
                               <FormControl>
                                 <ImageUpload
-                                  bucket="avatars"
+                                  folder="avatars"
                                   value={field.value}
                                   onChange={field.onChange}
                                   className="w-28 mx-auto"
@@ -501,67 +424,6 @@ export default function ProfilePage() {
                 </CardContent>
               </Card>
             </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Change Password Section */}
-      <Card className="mt-6">
-        <CardContent className="p-6 sm:p-8">
-          <div className="flex items-center gap-2 mb-6">
-            <Lock className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Cambiar Contrasena</h2>
-          </div>
-
-          <div className="space-y-4 max-w-md">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nueva contrasena</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimo 6 caracteres"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Confirmar contrasena</label>
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repite la contrasena"
-              />
-            </div>
-
-            <Button
-              onClick={handleChangePassword}
-              disabled={changingPassword || !newPassword || !confirmPassword}
-              className="mt-2"
-            >
-              {changingPassword ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cambiando...
-                </>
-              ) : (
-                'Cambiar Contrasena'
-              )}
-            </Button>
           </div>
         </CardContent>
       </Card>

@@ -16,10 +16,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { TagSelector } from './tag-selector'
 import { INGREDIENT_UNITS } from '@/lib/constants'
+import { getAllCategories } from '@/lib/actions/categories'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import type { Category } from '@/lib/types'
 
@@ -39,7 +39,6 @@ export function RecipeFormFields({
   onTagsChange,
 }: RecipeFormFieldsProps) {
   const [categories, setCategories] = useState<Category[]>([])
-  const supabase = createClient()
 
   const {
     fields: ingredientFields,
@@ -61,15 +60,11 @@ export function RecipeFormFields({
 
   useEffect(() => {
     async function loadCategories() {
-      if (!supabase) return
-      const { data } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-      setCategories(data || [])
+      const data = await getAllCategories()
+      setCategories(data)
     }
     loadCategories()
-  }, [supabase])
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -117,7 +112,7 @@ export function RecipeFormFields({
               <FormLabel>Imagen</FormLabel>
               <FormControl>
                 <ImageUpload
-                  bucket="recipe-images"
+                  folder="recipes"
                   value={field.value || null}
                   onChange={(url) => field.onChange(url || '')}
                   aspectRatio="video"

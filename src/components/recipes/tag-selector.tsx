@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { X, Plus, Tag, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { getAllTags, createTag } from '@/lib/actions/tags'
 
 interface TagData {
   id: string
@@ -42,40 +42,31 @@ export function TagSelector({
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showInput, setShowInput] = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
     async function loadTags() {
-      if (!supabase) {
-        setIsLoading(false)
-        return
-      }
+      const result = await getAllTags()
 
-      const { data, error } = await supabase
-        .from('tags')
-        .select('id, name, slug')
-        .order('name')
-
-      if (!error && data) {
-        setTags(data)
+      if (result.success) {
+        setTags(result.data)
       }
 
       setIsLoading(false)
     }
 
     loadTags()
-  }, [supabase])
+  }, [])
 
-  const toggleTag = (tagId: string) => {
+  const toggleTag = useCallback((tagId: string) => {
     if (selectedTags.includes(tagId)) {
       onTagsChange(selectedTags.filter(id => id !== tagId))
     } else {
       onTagsChange([...selectedTags, tagId])
     }
-  }
+  }, [selectedTags, onTagsChange])
 
   const handleCreateTag = async () => {
-    if (!supabase || !newTagName.trim()) return
+    if (!newTagName.trim()) return
 
     const trimmedName = newTagName.trim()
     const slug = generateSlug(trimmedName)
@@ -97,21 +88,13 @@ export function TagSelector({
 
     setIsCreating(true)
 
-    const { data, error } = await supabase
-      .from('tags')
-      .insert({ name: trimmedName, slug })
-      .select('id, name, slug')
-      .single()
+    const result = await createTag(trimmedName, slug)
 
-    if (error) {
-      if (error.code === '23505') {
-        toast.error('Este tag ya existe')
-      } else {
-        toast.error('Error al crear el tag')
-      }
-    } else if (data) {
-      setTags(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-      onTagsChange([...selectedTags, data.id])
+    if (!result.success) {
+      toast.error(result.error || 'Error al crear el tag')
+    } else if (result.data) {
+      setTags(prev => [...prev, result.data!].sort((a, b) => a.name.localeCompare(b.name)))
+      onTagsChange([...selectedTags, result.data.id])
       setNewTagName('')
       setShowInput(false)
       toast.success('Tag creado')
@@ -130,6 +113,16 @@ export function TagSelector({
     }
   }
 
+  // Memoized filtered lists - must be before any early returns
+  const selectedTagObjects = useMemo(
+    () => tags.filter(t => selectedTags.includes(t.id)),
+    [tags, selectedTags]
+  )
+  const availableTags = useMemo(
+    () => tags.filter(t => !selectedTags.includes(t.id)),
+    [tags, selectedTags]
+  )
+
   if (isLoading) {
     return (
       <div className={cn('flex items-center gap-2', className)}>
@@ -138,9 +131,6 @@ export function TagSelector({
       </div>
     )
   }
-
-  const selectedTagObjects = tags.filter(t => selectedTags.includes(t.id))
-  const availableTags = tags.filter(t => !selectedTags.includes(t.id))
 
   return (
     <div className={cn('space-y-3', className)}>

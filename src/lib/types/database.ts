@@ -4,8 +4,8 @@ export interface Profile {
   display_name: string | null
   avatar_url: string | null
   bio: string | null
-  created_at: string
-  updated_at: string
+  created_at: Date | string | null
+  updated_at: Date | string | null
 }
 
 export interface Category {
@@ -14,12 +14,12 @@ export interface Category {
   slug: string
   description: string | null
   icon: string | null
-  created_at: string
+  created_at: Date | string | null
 }
 
 export interface Recipe {
   id: string
-  user_id: string
+  user_id: string | null
   title: string
   slug: string
   description: string | null
@@ -27,13 +27,13 @@ export interface Recipe {
   source_url: string | null
   cooking_time: number | null
   prep_time: number | null
-  servings: number
-  difficulty: 'easy' | 'medium' | 'hard' | null
-  is_public: boolean
-  is_imported: boolean
+  servings: number | null
+  difficulty: 'easy' | 'medium' | 'hard' | string | null
+  is_public: boolean | null
+  is_imported: boolean | null
   imported_from: string | null
-  created_at: string
-  updated_at: string
+  created_at: Date | string | null
+  updated_at: Date | string | null
 }
 
 export interface RecipeWithDetails extends Recipe {
@@ -51,23 +51,23 @@ export interface Ingredient {
   id: string
   name: string
   category: string | null
-  created_at: string
+  created_at: Date | string | null
 }
 
 export interface RecipeIngredient {
   id: string
-  recipe_id: string
-  ingredient_id: string
+  recipe_id: string | null
+  ingredient_id: string | null
   quantity: number | null
   unit: string | null
   notes: string | null
-  order_index: number
+  order_index: number | null
   ingredient?: Ingredient
 }
 
 export interface Instruction {
   id: string
-  recipe_id: string
+  recipe_id: string | null
   step_number: number
   content: string
   image_url: string | null
@@ -77,29 +77,29 @@ export interface Tag {
   id: string
   name: string
   slug: string
-  created_at: string
+  created_at: Date | string | null
 }
 
 export interface Bookmark {
   id: string
-  user_id: string
-  recipe_id: string
-  created_at: string
+  user_id: string | null
+  recipe_id: string | null
+  created_at: Date | string | null
   recipe?: Recipe
 }
 
 export interface RecipeNote {
   id: string
-  user_id: string
-  recipe_id: string
+  user_id: string | null
+  recipe_id: string | null
   content: string
-  is_private: boolean
-  created_at: string
-  updated_at: string
+  is_private: boolean | null
+  created_at: Date | string | null
+  updated_at: Date | string | null
 }
 
 export interface Like {
-  user_id: string
-  recipe_id: string
-  created_at: string
+  user_id: string | null
+  recipe_id: string | null
+  created_at: Date | string | null
 }

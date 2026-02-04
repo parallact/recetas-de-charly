@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, ChefHat } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 import type { Recipe, Category } from '@/lib/types'
 import { RecipeCard } from '@/components/recipes/recipe-card'
 import { Pagination } from '@/components/ui/pagination'
@@ -21,76 +21,76 @@ interface PaginatedResult {
 }
 
 async function getRecipes(categorySlug?: string, page = 1): Promise<PaginatedResult> {
-  const supabase = await createClient()
   const emptyResult: PaginatedResult = { recipes: [], totalCount: 0, totalPages: 0, currentPage: page }
-  if (!supabase) return emptyResult
 
-  // Ensure page is valid
-  const currentPage = Math.max(1, page)
-  const from = (currentPage - 1) * RECIPES_PER_PAGE
-  const to = from + RECIPES_PER_PAGE - 1
+  try {
+    const currentPage = Math.max(1, page)
+    const skip = (currentPage - 1) * RECIPES_PER_PAGE
 
-  // Get recipe IDs for category filter if needed
-  let categoryRecipeIds: string[] | null = null
-  if (categorySlug) {
-    const { data: category } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('slug', categorySlug)
-      .single()
+    // Build where clause
+    let whereClause: Record<string, unknown> = { is_public: true }
 
-    if (category) {
-      const { data: recipeIds } = await supabase
-        .from('recipe_categories')
-        .select('recipe_id')
-        .eq('category_id', category.id)
+    if (categorySlug) {
+      const category = await prisma.categories.findUnique({
+        where: { slug: categorySlug }
+      })
 
-      if (recipeIds && recipeIds.length > 0) {
-        categoryRecipeIds = recipeIds.map(r => r.recipe_id)
-      } else {
-        return emptyResult
+      if (!category) return emptyResult
+
+      whereClause = {
+        ...whereClause,
+        recipe_categories: {
+          some: { category_id: category.id }
+        }
       }
     }
-  }
 
-  // Build query with count
-  let query = supabase
-    .from('recipes')
-    .select('*, profiles:user_id(display_name)', { count: 'exact' })
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
+    // Get recipes with count
+    const [recipes, totalCount] = await Promise.all([
+      prisma.recipes.findMany({
+        where: whereClause,
+        include: {
+          users: {
+            include: { profiles: true }
+          }
+        },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: RECIPES_PER_PAGE
+      }),
+      prisma.recipes.count({ where: whereClause })
+    ])
 
-  if (categoryRecipeIds) {
-    query = query.in('id', categoryRecipeIds)
-  }
+    const totalPages = Math.ceil(totalCount / RECIPES_PER_PAGE)
 
-  const { data, error, count } = await query.range(from, to)
+    // Transform to expected format
+    const formattedRecipes = recipes.map(recipe => ({
+      ...recipe,
+      profiles: recipe.users?.profiles
+        ? { display_name: recipe.users.profiles.display_name }
+        : null
+    })) as RecipeWithAuthor[]
 
-  if (error) {
+    return {
+      recipes: formattedRecipes,
+      totalCount,
+      totalPages,
+      currentPage
+    }
+  } catch {
     return emptyResult
-  }
-
-  const totalCount = count || 0
-  const totalPages = Math.ceil(totalCount / RECIPES_PER_PAGE)
-
-  return {
-    recipes: (data || []) as RecipeWithAuthor[],
-    totalCount,
-    totalPages,
-    currentPage
   }
 }
 
 async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
-  const { data } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name')
-
-  return data || []
+  try {
+    const categories = await prisma.categories.findMany({
+      orderBy: { name: 'asc' }
+    })
+    return categories as Category[]
+  } catch {
+    return []
+  }
 }
 
 export default async function RecipesPage({

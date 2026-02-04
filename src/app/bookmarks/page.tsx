@@ -18,8 +18,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Bookmark, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { RecipeCard } from '@/components/recipes/recipe-card'
+import { getUserBookmarks, deleteBookmark } from '@/lib/actions/bookmarks'
 
 interface BookmarkedRecipe {
   id: string
@@ -36,103 +37,44 @@ interface BookmarkedRecipe {
   }
 }
 
-// Raw type from Supabase query
-interface RawBookmark {
-  id: string
-  recipe: {
-    id: string
-    title: string
-    slug: string
-    description: string | null
-    image_url: string | null
-    cooking_time: number | null
-    servings: number | null
-    difficulty: string | null
-    recipe_likes: { count: number }[]
-  } | null
-}
-
 export default function BookmarksPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const { data: session, status } = useSession()
   const [bookmarks, setBookmarks] = useState<BookmarkedRecipe[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteBookmarkId, setDeleteBookmarkId] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadBookmarks() {
-      if (!supabase) {
-        setLoading(false)
-        return
-      }
+      if (status === 'loading') return
 
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
+      if (!session?.user) {
         toast.error('Debes iniciar sesion para ver tus guardados')
         router.push('/login')
         return
       }
 
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .select(`
-          id,
-          recipe:recipes (
-            id,
-            title,
-            slug,
-            description,
-            image_url,
-            cooking_time,
-            servings,
-            difficulty,
-            recipe_likes(count)
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+      const result = await getUserBookmarks()
 
-      if (error) {
-        toast.error('Error al cargar los guardados')
+      if (!result.success) {
+        toast.error(result.error || 'Error al cargar los guardados')
       } else {
-        // Transform data to include likes_count
-        const rawData = (data || []) as unknown as RawBookmark[]
-        const bookmarksWithLikes: BookmarkedRecipe[] = rawData
-          .filter((b): b is RawBookmark & { recipe: NonNullable<RawBookmark['recipe']> } => b.recipe !== null)
-          .map(bookmark => ({
-            id: bookmark.id,
-            recipe: {
-              id: bookmark.recipe.id,
-              title: bookmark.recipe.title,
-              slug: bookmark.recipe.slug,
-              description: bookmark.recipe.description,
-              image_url: bookmark.recipe.image_url,
-              cooking_time: bookmark.recipe.cooking_time,
-              servings: bookmark.recipe.servings,
-              difficulty: bookmark.recipe.difficulty,
-              likes_count: bookmark.recipe.recipe_likes?.[0]?.count || 0
-            }
-          }))
-        setBookmarks(bookmarksWithLikes)
+        setBookmarks(result.data)
       }
 
       setLoading(false)
     }
 
     loadBookmarks()
-  }, [supabase, router])
+  }, [session, status, router])
 
   const confirmRemoveBookmark = async () => {
-    if (!supabase || !deleteBookmarkId) return
+    if (!deleteBookmarkId) return
 
-    const { error } = await supabase
-      .from('bookmarks')
-      .delete()
-      .eq('id', deleteBookmarkId)
+    const result = await deleteBookmark(deleteBookmarkId)
 
-    if (error) {
-      toast.error('Error al eliminar el guardado')
+    if (!result.success) {
+      toast.error(result.error || 'Error al eliminar el guardado')
     } else {
       setBookmarks(bookmarks.filter((b) => b.id !== deleteBookmarkId))
       toast.success('Receta eliminada de guardados')
@@ -140,7 +82,7 @@ export default function BookmarksPage() {
     setDeleteBookmarkId(null)
   }
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8">

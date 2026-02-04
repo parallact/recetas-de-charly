@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Upload, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
+import { getUploadUrl } from '@/lib/actions/storage'
 import { cn } from '@/lib/utils'
 
 interface ImageUploadProps {
-  bucket: 'recipe-images' | 'avatars'
+  folder?: 'recipes' | 'avatars'
   value?: string | null
   onChange: (url: string | null) => void
   className?: string
@@ -33,7 +34,7 @@ function formatFileSize(bytes: number): string {
 }
 
 export function ImageUpload({
-  bucket,
+  folder = 'recipes',
   value,
   onChange,
   className,
@@ -41,6 +42,7 @@ export function ImageUpload({
   maxSizeMB = 5,
   rounded = false,
 }: ImageUploadProps) {
+  const { data: session } = useSession()
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -53,9 +55,6 @@ export function ImageUpload({
   const [urlInput, setUrlInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Singleton client - no memoization needed
-  const supabase = createClient()
 
   const aspectRatioClass = {
     square: 'aspect-square',
@@ -73,7 +72,6 @@ export function ImageUpload({
   }, [])
 
   const simulateProgress = useCallback(() => {
-    // Simulate progress that slows down as it approaches completion
     setUploadState(prev => {
       if (prev.progress >= 90) return prev
       const increment = Math.max(1, (90 - prev.progress) / 10)
@@ -83,8 +81,8 @@ export function ImageUpload({
 
   const handleFileSelect = useCallback(
     async (file: File) => {
-      if (!supabase) {
-        toast.error('Error de conexion')
+      if (!session?.user) {
+        toast.error('Debes iniciar sesion para subir imagenes')
         return
       }
 
@@ -112,25 +110,25 @@ export function ImageUpload({
       progressIntervalRef.current = setInterval(simulateProgress, 150)
 
       try {
-        // Check if user is authenticated
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          toast.error('Debes iniciar sesion para subir imagenes')
-          setUploadState(prev => ({ ...prev, isUploading: false, status: 'error', progress: 0 }))
-          return
+        // Get presigned URL from server
+        const result = await getUploadUrl(file.name, file.type, folder)
+
+        if (!result.success || !result.uploadUrl || !result.publicUrl) {
+          throw new Error(result.error || 'Error al obtener URL de subida')
         }
 
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+        // Upload directly to R2
+        const uploadResponse = await fetch(result.uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
+        })
 
-        const { error: uploadError } = await supabase.storage
-          .from(bucket)
-          .upload(fileName, file, {
-            cacheControl: '3600',
-            upsert: false,
-          })
-
-        if (uploadError) throw uploadError
+        if (!uploadResponse.ok) {
+          throw new Error('Error al subir la imagen')
+        }
 
         // Complete progress
         if (progressIntervalRef.current) {
@@ -138,14 +136,10 @@ export function ImageUpload({
         }
         setUploadState(prev => ({ ...prev, progress: 100, status: 'success' }))
 
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(fileName)
-
         // Brief delay to show 100% completion
         await new Promise(resolve => setTimeout(resolve, 300))
 
-        onChange(publicUrl)
+        onChange(result.publicUrl)
         toast.success('Imagen subida')
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Error al subir la imagen'
@@ -164,7 +158,7 @@ export function ImageUpload({
         })
       }
     },
-    [supabase, bucket, maxSizeMB, onChange, simulateProgress]
+    [session, folder, maxSizeMB, onChange, simulateProgress]
   )
 
   const handleDrop = useCallback(

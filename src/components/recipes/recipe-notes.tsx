@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { StickyNote, Plus, Pencil, Trash2, Loader2, Lock, Globe } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { getRecipeNotes, addRecipeNote, updateRecipeNote, deleteRecipeNote } from '@/lib/actions/notes'
 
 interface RecipeNote {
   id: string
@@ -30,39 +30,18 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
-  const supabase = createClient()
 
   useEffect(() => {
     let isMounted = true
 
     async function loadNotes() {
-      if (!supabase) {
-        if (isMounted) setIsLoading(false)
-        return
-      }
-
-      const { data: { user } } = await supabase.auth.getUser()
+      const result = await getRecipeNotes(recipeId)
 
       if (!isMounted) return
 
-      if (!user) {
-        setIsLoading(false)
-        return
-      }
-
-      setUserId(user.id)
-
-      const { data, error } = await supabase
-        .from('recipe_notes')
-        .select('*')
-        .eq('recipe_id', recipeId)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (!isMounted) return
-
-      if (!error && data) {
-        setNotes(data)
+      if (result.success) {
+        setNotes(result.data)
+        setUserId(result.userId)
       }
 
       setIsLoading(false)
@@ -73,28 +52,19 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     return () => {
       isMounted = false
     }
-  }, [supabase, recipeId])
+  }, [recipeId])
 
   const handleAddNote = async () => {
-    if (!supabase || !userId || !newNote.trim()) return
+    if (!userId || !newNote.trim()) return
 
     setSaving(true)
 
-    const { data, error } = await supabase
-      .from('recipe_notes')
-      .insert({
-        user_id: userId,
-        recipe_id: recipeId,
-        content: newNote.trim(),
-        is_private: isPrivate,
-      })
-      .select()
-      .single()
+    const result = await addRecipeNote(recipeId, newNote.trim(), isPrivate)
 
-    if (error) {
-      toast.error('Error al guardar la nota')
-    } else if (data) {
-      setNotes(prev => [data, ...prev])
+    if (!result.success) {
+      toast.error(result.error || 'Error al guardar la nota')
+    } else if (result.data) {
+      setNotes(prev => [result.data!, ...prev])
       setNewNote('')
       setIsAdding(false)
       toast.success('Nota guardada')
@@ -104,21 +74,14 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   }
 
   const handleUpdateNote = async (noteId: string) => {
-    if (!supabase || !editContent.trim()) return
+    if (!editContent.trim()) return
 
     setSaving(true)
 
-    const { error } = await supabase
-      .from('recipe_notes')
-      .update({
-        content: editContent.trim(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', noteId)
-      .eq('user_id', userId)
+    const result = await updateRecipeNote(noteId, editContent.trim())
 
-    if (error) {
-      toast.error('Error al actualizar la nota')
+    if (!result.success) {
+      toast.error(result.error || 'Error al actualizar la nota')
     } else {
       setNotes(prev =>
         prev.map(n =>
@@ -133,16 +96,10 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   }
 
   const handleDeleteNote = async (noteId: string) => {
-    if (!supabase) return
+    const result = await deleteRecipeNote(noteId)
 
-    const { error } = await supabase
-      .from('recipe_notes')
-      .delete()
-      .eq('id', noteId)
-      .eq('user_id', userId)
-
-    if (error) {
-      toast.error('Error al eliminar la nota')
+    if (!result.success) {
+      toast.error(result.error || 'Error al eliminar la nota')
     } else {
       setNotes(prev => prev.filter(n => n.id !== noteId))
       toast.success('Nota eliminada')

@@ -30,9 +30,9 @@ import {
   ChefHat,
   BookOpen
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signOut, useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { AuthUser } from '@/lib/auth/get-user'
 import { SearchForm } from './search-form'
@@ -44,51 +44,34 @@ interface HeaderProps {
 export function Header({ initialUser }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
-  const [user, setUser] = useState<AuthUser | null>(initialUser)
   const router = useRouter()
-  const supabase = createClient()
+  const { data: session, status } = useSession()
 
-  useEffect(() => {
-    if (!supabase) return
-
-    // Listen for auth changes (login/logout during session)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: { user: { id: string; email?: string } } | null) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null)
-      } else if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('display_name, avatar_url')
-            .eq('id', session.user.id)
-            .single()
-
-          setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            display_name: profile?.display_name || undefined,
-            avatar_url: profile?.avatar_url || undefined,
-          })
-        } catch {
-          // Profile fetch failed silently - user still authenticated
-        }
+  // Derive user from session or initial value - no useEffect needed
+  const user = useMemo<AuthUser | null>(() => {
+    if (session?.user) {
+      return {
+        id: session.user.id || '',
+        email: session.user.email || '',
+        display_name: session.user.name || undefined,
+        avatar_url: session.user.image || undefined,
       }
-    })
-
-    return () => {
-      subscription.unsubscribe()
     }
-  }, [supabase])
+    if (status === 'unauthenticated') {
+      return null
+    }
+    // While loading, use initial value
+    return initialUser
+  }, [session, status, initialUser])
 
   const confirmLogout = async () => {
-    if (!supabase) return
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      toast.error('Error al cerrar sesion')
-    } else {
+    try {
+      await signOut({ redirect: false })
       toast.success('Sesion cerrada')
       router.push('/')
       router.refresh()
+    } catch {
+      toast.error('Error al cerrar sesion')
     }
     setShowLogoutDialog(false)
     setMobileMenuOpen(false)

@@ -1,36 +1,34 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 
 async function getCategories() {
-  const supabase = await createClient()
-  if (!supabase) return []
+  try {
+    // Fetch categories and recipe counts in parallel
+    const [categories, recipeCategoriesData] = await Promise.all([
+      prisma.categories.findMany({
+        select: { id: true, name: true, slug: true, icon: true, description: true },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.recipe_categories.findMany({
+        select: { category_id: true }
+      })
+    ])
 
-  // Fetch categories and recipe counts in parallel (2 queries instead of N+1)
-  const [categoriesResult, countsResult] = await Promise.all([
-    supabase
-      .from('categories')
-      .select('id, name, slug, icon, description')
-      .order('name'),
-    supabase
-      .from('recipe_categories')
-      .select('category_id'),
-  ])
+    // Count recipes per category in memory
+    const countsByCategory: Record<string, number> = {}
+    for (const rc of recipeCategoriesData) {
+      countsByCategory[rc.category_id] = (countsByCategory[rc.category_id] || 0) + 1
+    }
 
-  const categories = categoriesResult.data || []
-  const recipeCategoriesData = countsResult.data || []
-
-  // Count recipes per category in memory
-  const countsByCategory: Record<string, number> = {}
-  for (const rc of recipeCategoriesData) {
-    countsByCategory[rc.category_id] = (countsByCategory[rc.category_id] || 0) + 1
+    return categories.map((cat) => ({
+      ...cat,
+      recipeCount: countsByCategory[cat.id] || 0,
+    }))
+  } catch {
+    return []
   }
-
-  return categories.map((cat) => ({
-    ...cat,
-    recipeCount: countsByCategory[cat.id] || 0,
-  }))
 }
 
 export default async function CategoriesPage() {

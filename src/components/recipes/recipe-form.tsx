@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm, type Resolver } from 'react-hook-form'
@@ -10,9 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form } from '@/components/ui/form'
 import { ChefHat, Loader2, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { recipeSchema, generateSlug, type RecipeFormData } from '@/lib/schemas/recipe'
 import { RecipeFormFields } from './recipe-form-fields'
+import { createRecipe, updateRecipe } from '@/lib/actions/recipe-form'
 
 interface RecipeFormProps {
   mode: 'create' | 'edit'
@@ -45,11 +46,16 @@ export function RecipeForm({
   backUrl = '/recipes',
 }: RecipeFormProps) {
   const router = useRouter()
-  const supabase = createClient()
+  const { data: session, status } = useSession()
 
   const [loading, setLoading] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories)
   const [selectedTags, setSelectedTags] = useState<string[]>(initialTags)
+
+  // Refs for tracking previous values and current state (avoids re-registering listeners)
+  const prevCategoriesRef = useRef<string>(JSON.stringify(initialCategories))
+  const prevTagsRef = useRef<string>(JSON.stringify(initialTags))
+  const formStateRef = useRef({ isDirty: false, hasCategories: false })
 
   const form = useForm<RecipeFormData>({
     resolver: zodResolver(recipeSchema) as Resolver<RecipeFormData>,
@@ -63,41 +69,58 @@ export function RecipeForm({
     }
   }, [initialData, form])
 
-  // Update categories when initialCategories changes
+  // Update categories when initialCategories changes (proper deep comparison)
   useEffect(() => {
-    setSelectedCategories(initialCategories)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(initialCategories)])
+    const serialized = JSON.stringify(initialCategories)
+    if (serialized !== prevCategoriesRef.current) {
+      prevCategoriesRef.current = serialized
+      setSelectedCategories(initialCategories)
+    }
+  }, [initialCategories])
 
-  // Update tags when initialTags changes
+  // Update tags when initialTags changes (proper deep comparison)
   useEffect(() => {
-    setSelectedTags(initialTags)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(initialTags)])
+    const serialized = JSON.stringify(initialTags)
+    if (serialized !== prevTagsRef.current) {
+      prevTagsRef.current = serialized
+      setSelectedTags(initialTags)
+    }
+  }, [initialTags])
 
-  // Warn before leaving with unsaved changes
+  // Keep ref in sync with form state (for beforeunload handler)
+  useEffect(() => {
+    formStateRef.current = {
+      isDirty: form.formState.isDirty,
+      hasCategories: mode === 'create' && selectedCategories.length > 0,
+    }
+  }, [form.formState.isDirty, selectedCategories, mode])
+
+  // Warn before leaving with unsaved changes (stable handler, no re-registration)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (form.formState.isDirty || (mode === 'create' && selectedCategories.length > 0)) {
+      if (formStateRef.current.isDirty || formStateRef.current.hasCategories) {
         e.preventDefault()
       }
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [form.formState.isDirty, selectedCategories, mode])
+  }, [])
 
-  const toggleCategory = (categoryId: string) => {
+  const toggleCategory = useCallback((categoryId: string) => {
     setSelectedCategories(prev =>
       prev.includes(categoryId)
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     )
-  }
+  }, [])
 
   const onSubmit = async (data: RecipeFormData) => {
-    if (!supabase) {
-      toast.error('Supabase no esta configurado')
+    if (status === 'loading') return
+
+    if (!session?.user) {
+      toast.error('Debes iniciar sesion')
+      router.push('/login')
       return
     }
 
@@ -118,101 +141,57 @@ export function RecipeForm({
     setLoading(true)
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Debes iniciar sesion')
-        router.push('/login')
-        return
-      }
-
       const slug = generateSlug(data.title)
 
-      // Prepare ingredients for atomic function
+      // Prepare ingredients
       const ingredientsJson = validIngredients.map(ing => ({
         name: ing.name.trim().toLowerCase(),
         quantity: ing.quantity ? parseFloat(ing.quantity) : null,
         unit: ing.unit === 'otro' ? ing.customUnit?.trim() || null : ing.unit || null,
       }))
 
-      // Prepare instructions for atomic function
+      // Prepare instructions
       const instructionsJson = validInstructions.map(inst => ({
         content: inst.content.trim(),
       }))
 
+      const formInput = {
+        title: data.title.trim(),
+        slug,
+        description: data.description?.trim() || null,
+        image_url: data.imageUrl?.trim() || null,
+        prep_time: data.prepTime ? parseInt(data.prepTime, 10) : null,
+        cooking_time: data.cookingTime ? parseInt(data.cookingTime, 10) : null,
+        servings: data.servings || 4,
+        difficulty: data.difficulty || 'medium',
+        is_public: true,
+        ingredients: ingredientsJson,
+        instructions: instructionsJson,
+        category_ids: selectedCategories,
+        tag_ids: selectedTags,
+      }
+
       if (mode === 'create') {
-        // Create recipe atomically
-        const { data: newRecipeId, error: recipeError } = await supabase
-          .rpc('create_recipe_atomic', {
-            p_user_id: user.id,
-            p_title: data.title.trim(),
-            p_slug: slug,
-            p_description: data.description?.trim() || null,
-            p_image_url: data.imageUrl?.trim() || null,
-            p_prep_time: data.prepTime ? parseInt(data.prepTime, 10) : null,
-            p_cooking_time: data.cookingTime ? parseInt(data.cookingTime, 10) : null,
-            p_servings: data.servings || 4,
-            p_difficulty: data.difficulty || 'medium',
-            p_is_public: true,
-            p_ingredients: ingredientsJson,
-            p_instructions: instructionsJson,
-            p_category_ids: selectedCategories,
-          })
+        const result = await createRecipe(formInput)
 
-        if (recipeError) {
-          handleError(recipeError, 'crear')
+        if (!result.success) {
+          toast.error(result.error || 'Error al crear la receta')
           return
-        }
-
-        // Save tags separately (not in atomic function)
-        if (selectedTags.length > 0) {
-          await supabase
-            .from('recipe_tags')
-            .insert(selectedTags.map(tagId => ({
-              recipe_id: newRecipeId,
-              tag_id: tagId,
-            })))
         }
 
         toast.success('Receta creada exitosamente!')
-        router.push(`/recipes/${newRecipeId}`)
+        router.push(`/recipes/${result.recipeId}`)
       } else {
-        // Update recipe atomically
-        const { error: recipeError } = await supabase
-          .rpc('update_recipe_atomic', {
-            p_recipe_id: recipeId,
-            p_user_id: user.id,
-            p_title: data.title.trim(),
-            p_slug: slug,
-            p_description: data.description?.trim() || null,
-            p_image_url: data.imageUrl?.trim() || null,
-            p_prep_time: data.prepTime ? parseInt(data.prepTime, 10) : null,
-            p_cooking_time: data.cookingTime ? parseInt(data.cookingTime, 10) : null,
-            p_servings: data.servings || 4,
-            p_difficulty: data.difficulty || 'medium',
-            p_is_public: true,
-            p_ingredients: ingredientsJson,
-            p_instructions: instructionsJson,
-            p_category_ids: selectedCategories,
-          })
-
-        if (recipeError) {
-          handleError(recipeError, 'actualizar')
+        if (!recipeId) {
+          toast.error('ID de receta no encontrado')
           return
         }
 
-        // Update tags: delete existing and insert new
-        await supabase
-          .from('recipe_tags')
-          .delete()
-          .eq('recipe_id', recipeId)
+        const result = await updateRecipe(recipeId, formInput)
 
-        if (selectedTags.length > 0) {
-          await supabase
-            .from('recipe_tags')
-            .insert(selectedTags.map(tagId => ({
-              recipe_id: recipeId,
-              tag_id: tagId,
-            })))
+        if (!result.success) {
+          toast.error(result.error || 'Error al actualizar la receta')
+          return
         }
 
         toast.success('Receta actualizada exitosamente!')
@@ -222,17 +201,6 @@ export function RecipeForm({
       toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} la receta`)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleError = (error: { code?: string; message?: string }, action: string) => {
-    if (error.code === '23505' || error.message?.includes('duplicate')) {
-      toast.error('Ya tienes una receta con ese nombre')
-    } else if (error.message?.includes('not found') || error.message?.includes('not owned')) {
-      toast.error('No tienes permiso para editar esta receta')
-    } else {
-      console.error(`Recipe ${action} error:`, error)
-      toast.error(`Error al ${action} la receta`)
     }
   }
 

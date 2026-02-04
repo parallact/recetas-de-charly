@@ -3,24 +3,25 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { RecipeForm } from '@/components/recipes/recipe-form'
 
 export default function NewRecipePage() {
   const router = useRouter()
-  const supabase = createClient()
+  const { data: session, status } = useSession()
 
   useEffect(() => {
-    async function checkAuth() {
-      if (!supabase) return
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        toast.error('Debes iniciar sesion para crear recetas')
-        router.push('/login')
-      }
+    if (status === 'loading') return
+
+    if (!session?.user) {
+      toast.error('Debes iniciar sesion para crear recetas')
+      router.push('/login')
     }
-    checkAuth()
-  }, [supabase, router])
+  }, [session, status, router])
+
+  if (status === 'loading' || !session?.user) {
+    return null
+  }
 
   return <RecipeForm mode="create" backUrl="/recipes" />
 }

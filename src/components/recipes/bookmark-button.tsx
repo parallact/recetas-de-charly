@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bookmark, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { useSession } from 'next-auth/react'
+import { isRecipeBookmarked, toggleBookmark } from '@/lib/actions/bookmarks'
 
 interface BookmarkButtonProps {
   recipeId: string
@@ -20,11 +21,10 @@ export function BookmarkButton({
   variant = 'default',
   className,
 }: BookmarkButtonProps) {
+  const { data: session, status } = useSession()
   const [isBookmarked, setIsBookmarked] = useState(initialBookmarked)
   const [isLoading, setIsLoading] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
-  const supabase = createClient()
   const isMounted = useRef(true)
 
   useEffect(() => {
@@ -33,44 +33,26 @@ export function BookmarkButton({
   }, [])
 
   const checkBookmarkStatus = useCallback(async () => {
-    if (!supabase) {
+    if (status === 'loading') return
+
+    if (!session?.user) {
       setIsChecking(false)
       return
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!isMounted.current) return
-
-    if (!user) {
-      setIsChecking(false)
-      return
-    }
-
-    setUserId(user.id)
-
-    const { data } = await supabase
-      .from('bookmarks')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('recipe_id', recipeId)
-      .maybeSingle()
+    const bookmarked = await isRecipeBookmarked(recipeId)
 
     if (!isMounted.current) return
-    setIsBookmarked(!!data)
+    setIsBookmarked(bookmarked)
     setIsChecking(false)
-  }, [supabase, recipeId])
+  }, [session, status, recipeId])
 
   useEffect(() => {
     checkBookmarkStatus()
   }, [checkBookmarkStatus])
 
   const handleToggleBookmark = async () => {
-    if (!supabase) {
-      toast.error('Error de conexion')
-      return
-    }
-
-    if (!userId) {
+    if (!session?.user) {
       toast.error('Debes iniciar sesion para guardar recetas')
       return
     }
@@ -85,27 +67,14 @@ export function BookmarkButton({
     setIsBookmarked(!isBookmarked)
 
     try {
-      if (previousState) {
-        // Remove bookmark
-        const { error } = await supabase
-          .from('bookmarks')
-          .delete()
-          .eq('user_id', userId)
-          .eq('recipe_id', recipeId)
+      const result = await toggleBookmark(recipeId)
 
-        if (error) throw error
-        if (isMounted.current) toast.success('Receta eliminada de guardados')
-      } else {
-        // Add bookmark
-        const { error } = await supabase
-          .from('bookmarks')
-          .insert({
-            user_id: userId,
-            recipe_id: recipeId,
-          })
+      if (!result.success) {
+        throw new Error(result.error || 'Error al guardar')
+      }
 
-        if (error) throw error
-        if (isMounted.current) toast.success('Receta guardada')
+      if (isMounted.current) {
+        toast.success(result.isBookmarked ? 'Receta guardada' : 'Receta eliminada de guardados')
       }
     } catch {
       // Revert optimistic update on error

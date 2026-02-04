@@ -9,9 +9,10 @@ import {
 } from '@/components/ui/select'
 import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Tag } from 'lucide-react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 import { RecipeCard } from '@/components/recipes/recipe-card'
 import { Badge } from '@/components/ui/badge'
+import { Prisma } from '@/generated/prisma'
 
 const RECIPES_PER_PAGE = 12
 
@@ -24,7 +25,7 @@ interface SearchFilters {
   page?: number
 }
 
-// Recipe type for search results - using any for Supabase joined data
+// Recipe type for search results
 interface SearchRecipe {
   id: string
   title: string
@@ -35,37 +36,20 @@ interface SearchRecipe {
   prep_time: number | null
   servings: number | null
   difficulty: string | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  recipe_tags?: any
+  recipe_tags?: { tags: { name: string; slug: string } | null }[]
 }
 
 interface SearchResult {
   recipes: SearchRecipe[]
   categories: Array<{ id: string; name: string; slug: string }>
-  tags: Array<{ id: string; name: string; slug: string; color: string | null }>
+  tags: Array<{ id: string; name: string; slug: string }>
   totalCount: number
   totalPages: number
   currentPage: number
   error: string | null
 }
 
-// Sanitize search query to prevent issues with special characters
-function sanitizeSearchQuery(query: string | undefined): string | undefined {
-  if (!query) return undefined
-
-  // Limit length to prevent performance issues
-  const trimmed = query.trim().slice(0, 100)
-
-  // Escape special characters for ILIKE pattern
-  // % and _ are wildcards in SQL ILIKE
-  return trimmed
-    .replace(/\\/g, '\\\\') // Escape backslashes first
-    .replace(/%/g, '\\%')   // Escape percent
-    .replace(/_/g, '\\_')   // Escape underscore
-}
-
 async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
-  const supabase = await createClient()
   const emptyResult: SearchResult = {
     recipes: [],
     categories: [],
@@ -76,112 +60,103 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
     error: null
   }
 
-  if (!supabase) return emptyResult
-
   try {
-    // Fetch categories and tags for the filter dropdowns in parallel
-    const [categoriesResult, tagsResult] = await Promise.all([
-      supabase.from('categories').select('id, name, slug').order('name'),
-      supabase.from('tags').select('id, name, slug, color').order('name')
+    // Fetch categories and tags for filter dropdowns
+    const [categories, tags] = await Promise.all([
+      prisma.categories.findMany({
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.tags.findMany({
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: 'asc' }
+      })
     ])
-
-    if (categoriesResult.error) throw categoriesResult.error
-    if (tagsResult.error) throw tagsResult.error
-
-    const categories = categoriesResult.data
-    const tags = tagsResult.data
 
     // Calculate pagination
     const currentPage = Math.max(1, filters.page || 1)
-    const from = (currentPage - 1) * RECIPES_PER_PAGE
-    const to = from + RECIPES_PER_PAGE - 1
+    const skip = (currentPage - 1) * RECIPES_PER_PAGE
 
-    // Get category recipe IDs if filtering by category
-    let categoryRecipeIds: string[] | null = null
-    if (filters.category && filters.category !== 'all') {
-      const { data: categoryRecipes, error: categoryError } = await supabase
-        .from('recipe_categories')
-        .select('recipe_id, categories!inner(slug)')
-        .eq('categories.slug', filters.category)
+    // Build where clause
+    const whereConditions: Prisma.recipesWhereInput[] = [{ is_public: true }]
 
-      if (categoryError) throw categoryError
-      categoryRecipeIds = categoryRecipes?.map((cr) => cr.recipe_id) || []
-
-      if (categoryRecipeIds.length === 0) {
-        return { ...emptyResult, categories: categories || [], tags: tags || [] }
-      }
+    // Text search
+    if (filters.q?.trim()) {
+      const searchTerm = filters.q.trim().slice(0, 100)
+      whereConditions.push({
+        OR: [
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { description: { contains: searchTerm, mode: 'insensitive' } }
+        ]
+      })
     }
 
-    // Get tag recipe IDs if filtering by tag
-    let tagRecipeIds: string[] | null = null
-    if (filters.tag && filters.tag !== 'all') {
-      const { data: tagRecipes, error: tagError } = await supabase
-        .from('recipe_tags')
-        .select('recipe_id, tags!inner(slug)')
-        .eq('tags.slug', filters.tag)
-
-      if (tagError) throw tagError
-      tagRecipeIds = tagRecipes?.map((tr) => tr.recipe_id) || []
-
-      if (tagRecipeIds.length === 0) {
-        return { ...emptyResult, categories: categories || [], tags: tags || [] }
-      }
-    }
-
-    // Build the recipe query with count
-    let query = supabase
-      .from('recipes')
-      .select('id, title, slug, description, image_url, cooking_time, prep_time, servings, difficulty, recipe_tags(tags(name, color))', { count: 'exact' })
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-
-    // Apply text search with sanitized query
-    const sanitizedQuery = sanitizeSearchQuery(filters.q)
-    if (sanitizedQuery) {
-      query = query.or(`title.ilike.%${sanitizedQuery}%,description.ilike.%${sanitizedQuery}%`)
-    }
-
-    // Apply difficulty filter
+    // Difficulty filter
     if (filters.difficulty && filters.difficulty !== 'all') {
-      query = query.eq('difficulty', filters.difficulty)
+      whereConditions.push({ difficulty: filters.difficulty })
     }
 
-    // Apply time filter
+    // Time filter
     if (filters.time && filters.time !== 'all') {
       const maxTime = parseInt(filters.time)
-      query = query.lte('cooking_time', maxTime)
+      whereConditions.push({ cooking_time: { lte: maxTime } })
     }
 
-    // Apply category filter
-    if (categoryRecipeIds) {
-      query = query.in('id', categoryRecipeIds)
-    }
-
-    // Apply tag filter
-    if (tagRecipeIds) {
-      // If both category and tag filters, get intersection
-      if (categoryRecipeIds) {
-        const intersection = categoryRecipeIds.filter(id => tagRecipeIds!.includes(id))
-        if (intersection.length === 0) {
-          return { ...emptyResult, categories: categories || [], tags: tags || [] }
+    // Category filter
+    if (filters.category && filters.category !== 'all') {
+      whereConditions.push({
+        recipe_categories: {
+          some: {
+            categories: { slug: filters.category }
+          }
         }
-        query = query.in('id', intersection)
-      } else {
-        query = query.in('id', tagRecipeIds)
-      }
+      })
     }
 
-    const { data: recipes, error: recipesError, count } = await query.range(from, to)
+    // Tag filter
+    if (filters.tag && filters.tag !== 'all') {
+      whereConditions.push({
+        recipe_tags: {
+          some: {
+            tags: { slug: filters.tag }
+          }
+        }
+      })
+    }
 
-    if (recipesError) throw recipesError
+    const whereClause: Prisma.recipesWhereInput = { AND: whereConditions }
 
-    const totalCount = count || 0
+    // Get recipes with count
+    const [recipes, totalCount] = await Promise.all([
+      prisma.recipes.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          image_url: true,
+          cooking_time: true,
+          prep_time: true,
+          servings: true,
+          difficulty: true,
+          recipe_tags: {
+            include: { tags: { select: { name: true, slug: true } } }
+          }
+        },
+        orderBy: { created_at: 'desc' },
+        skip,
+        take: RECIPES_PER_PAGE
+      }),
+      prisma.recipes.count({ where: whereClause })
+    ])
+
     const totalPages = Math.ceil(totalCount / RECIPES_PER_PAGE)
 
     return {
-      recipes: recipes || [],
-      categories: categories || [],
-      tags: tags || [],
+      recipes: recipes as SearchRecipe[],
+      categories,
+      tags,
       totalCount,
       totalPages,
       currentPage,
@@ -320,11 +295,7 @@ export default async function SearchPage({
             const activeTag = tags.find(t => t.slug === params.tag)
             if (!activeTag) return null
             return (
-              <Badge
-                variant="outline"
-                className="gap-1"
-                style={activeTag.color ? { borderColor: activeTag.color, color: activeTag.color } : undefined}
-              >
+              <Badge variant="outline" className="gap-1">
                 <Tag className="h-3 w-3" />
                 {activeTag.name}
               </Badge>

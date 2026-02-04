@@ -12,64 +12,57 @@ import {
   ArrowRight,
   Plus
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 import { RecipeCard } from '@/components/recipes/recipe-card'
 import { getUser } from '@/lib/auth/get-user'
 import type { Category, Recipe } from '@/lib/types'
 
 async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name')
-
-  if (error) {
+  try {
+    const categories = await prisma.categories.findMany({
+      orderBy: { name: 'asc' }
+    })
+    return categories as Category[]
+  } catch {
     return []
   }
-
-  return data || []
 }
 
 async function getFeaturedRecipes(): Promise<(Recipe & { likes_count: number })[]> {
-  const supabase = await createClient()
-  if (!supabase) return []
-
-  const { data, error } = await supabase
-    .from('recipes')
-    .select('*')
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
-    .limit(6)
-
-  if (error) {
+  try {
+    const recipes = await prisma.recipes.findMany({
+      where: { is_public: true },
+      orderBy: { created_at: 'desc' },
+      take: 6
+    })
+    return recipes.map(recipe => ({
+      ...recipe,
+      likes_count: 0,
+      // Convert Decimal to number for servings
+      servings: recipe.servings ?? 4
+    })) as (Recipe & { likes_count: number })[]
+  } catch {
     return []
   }
-
-  return (data || []).map(recipe => ({ ...recipe, likes_count: 0 }))
 }
 
 async function getCategoryCounts(): Promise<Record<string, number>> {
-  const supabase = await createClient()
-  if (!supabase) return {}
+  try {
+    const recipeCats = await prisma.recipe_categories.findMany({
+      where: {
+        recipes: { is_public: true }
+      },
+      select: { category_id: true }
+    })
 
-  // Join with recipes to only count public recipes
-  // Note: For better performance at scale, create a DB function with GROUP BY
-  const { data, error } = await supabase
-    .from('recipe_categories')
-    .select('category_id, recipes!inner(is_public)')
-    .eq('recipes.is_public', true)
-
-  if (error) return {}
-
-  const counts: Record<string, number> = {}
-  data?.forEach(item => {
-    counts[item.category_id] = (counts[item.category_id] || 0) + 1
-  })
-
-  return counts
+    const counts: Record<string, number> = {}
+    recipeCats.forEach(item => {
+      counts[item.category_id] = (counts[item.category_id] || 0) + 1
+    })
+    return counts
+  } catch {
+    return {}
+  }
 }
 
 export default async function HomePage() {

@@ -5,16 +5,17 @@ import { useRouter, useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { INGREDIENT_UNITS } from '@/lib/constants'
 import { RecipeForm } from '@/components/recipes/recipe-form'
+import { getRecipeForEdit } from '@/lib/actions/recipes'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 
 export default function EditRecipePage() {
   const router = useRouter()
   const params = useParams()
   const recipeId = params.id as string
-  const supabase = createClient()
+  const { data: session, status } = useSession()
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [initialData, setInitialData] = useState<RecipeFormData | null>(null)
@@ -23,72 +24,41 @@ export default function EditRecipePage() {
 
   useEffect(() => {
     async function loadRecipeData() {
-      if (!supabase || !recipeId) return
+      if (status === 'loading') return
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      if (!session?.user) {
         toast.error('Debes iniciar sesion para editar recetas')
         router.push('/login')
         return
       }
 
-      // Load recipe with all related data
-      const { data: recipe, error } = await supabase
-        .from('recipes')
-        .select(`
-          *,
-          recipe_ingredients(
-            quantity,
-            unit,
-            order_index,
-            ingredient:ingredients(name)
-          ),
-          instructions(
-            content,
-            step_number
-          ),
-          recipe_categories(
-            category_id
-          ),
-          recipe_tags(
-            tag_id
-          )
-        `)
-        .eq('id', recipeId)
-        .single()
+      if (!recipeId) return
 
-      if (error || !recipe) {
-        toast.error('No se encontro la receta')
+      const result = await getRecipeForEdit(recipeId)
+
+      if (!result.success || !result.data) {
+        toast.error(result.error || 'No se encontro la receta')
         router.push('/my-recipes')
         return
       }
 
-      // Check ownership
-      if (recipe.user_id !== user.id) {
-        toast.error('No tienes permiso para editar esta receta')
-        router.push('/my-recipes')
-        return
-      }
+      const recipe = result.data
 
       // Process ingredients
-      const ingredients = (recipe.recipe_ingredients || [])
-        .sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
-        .map((ri: { quantity: number | null; unit: string | null; ingredient: { name: string } | null }) => {
-          const isCustomUnit = ri.unit && !INGREDIENT_UNITS.find(u => u.value === ri.unit)
-          return {
-            name: ri.ingredient?.name || '',
-            quantity: ri.quantity?.toString() || '',
-            unit: isCustomUnit ? 'otro' : (ri.unit || ''),
-            customUnit: isCustomUnit ? ri.unit : '',
-          }
-        })
+      const ingredients = (recipe.recipe_ingredients || []).map((ri) => {
+        const isCustomUnit = ri.unit && !INGREDIENT_UNITS.find(u => u.value === ri.unit)
+        return {
+          name: ri.ingredients?.name || '',
+          quantity: ri.quantity?.toString() || '',
+          unit: isCustomUnit ? 'otro' : (ri.unit || ''),
+          customUnit: isCustomUnit ? (ri.unit || '') : '',
+        }
+      })
 
       // Process instructions
-      const instructions = (recipe.instructions || [])
-        .sort((a: { step_number: number }, b: { step_number: number }) => a.step_number - b.step_number)
-        .map((inst: { content: string }) => ({
-          content: inst.content,
-        }))
+      const instructions = (recipe.instructions || []).map((inst) => ({
+        content: inst.content || '',
+      }))
 
       // Set initial data
       setInitialData({
@@ -105,18 +75,18 @@ export default function EditRecipePage() {
       })
 
       // Set categories
-      const categoryIds = (recipe.recipe_categories || []).map((rc: { category_id: string }) => rc.category_id)
+      const categoryIds = (recipe.recipe_categories || []).map((rc) => rc.category_id)
       setInitialCategories(categoryIds)
 
       // Set tags
-      const tagIds = (recipe.recipe_tags || []).map((rt: { tag_id: string }) => rt.tag_id)
+      const tagIds = (recipe.recipe_tags || []).map((rt) => rt.tag_id)
       setInitialTags(tagIds)
 
       setInitialLoading(false)
     }
 
     loadRecipeData()
-  }, [supabase, recipeId, router])
+  }, [session, status, recipeId, router])
 
   if (initialLoading) {
     return (

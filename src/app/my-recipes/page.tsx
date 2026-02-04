@@ -25,8 +25,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Plus, MoreVertical, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { createClient } from '@/lib/supabase/client'
+import { useSession } from 'next-auth/react'
 import { RecipeCard } from '@/components/recipes/recipe-card'
+import { getUserRecipes, deleteRecipe } from '@/lib/actions/recipes'
 
 interface Recipe {
   id: string
@@ -41,88 +42,49 @@ interface Recipe {
   likes_count: number
 }
 
-// Raw type from Supabase query
-interface RawRecipe {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  image_url: string | null
-  cooking_time: number | null
-  servings: number | null
-  difficulty: string | null
-  created_at: string
-  recipe_likes: { count: number }[]
-}
-
 export default function MyRecipesPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const { data: session, status } = useSession()
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   const loadRecipes = useCallback(async () => {
-    if (!supabase) {
-      setLoading(false)
-      return
-    }
+    if (status === 'loading') return
 
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
+    if (!session?.user) {
       toast.error('Debes iniciar sesion para ver tus recetas')
       router.push('/login')
       return
     }
 
-    const { data: recipesData, error } = await supabase
-      .from('recipes')
-      .select('id, title, slug, description, image_url, cooking_time, servings, difficulty, created_at, recipe_likes(count)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    const result = await getUserRecipes()
 
-    // Transform the data to include likes_count
-    const rawRecipes = (recipesData || []) as unknown as RawRecipe[]
-    const recipesWithLikes: Recipe[] = rawRecipes.map(recipe => ({
-      id: recipe.id,
-      title: recipe.title,
-      slug: recipe.slug,
-      description: recipe.description,
-      image_url: recipe.image_url,
-      cooking_time: recipe.cooking_time,
-      servings: recipe.servings,
-      difficulty: recipe.difficulty,
-      created_at: recipe.created_at,
-      likes_count: recipe.recipe_likes?.[0]?.count || 0
-    }))
-
-    if (error) {
-      toast.error('Error al cargar tus recetas')
+    if (!result.success) {
+      toast.error(result.error || 'Error al cargar tus recetas')
     } else {
-      setRecipes(recipesWithLikes)
+      setRecipes(result.data)
     }
 
     setLoading(false)
-  }, [supabase, router])
+  }, [session, status, router])
 
   useEffect(() => {
     loadRecipes()
   }, [loadRecipes])
 
   const handleDelete = async () => {
-    if (!supabase || !deleteId) return
+    if (!deleteId) return
 
     setDeleting(true)
 
     try {
-      const { error } = await supabase
-        .from('recipes')
-        .delete()
-        .eq('id', deleteId)
+      const result = await deleteRecipe(deleteId)
 
-      if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error || 'Error al eliminar la receta')
+      }
 
       setRecipes(recipes.filter(r => r.id !== deleteId))
       toast.success('Receta eliminada')
@@ -134,7 +96,7 @@ export default function MyRecipesPage() {
     }
   }
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8">
         <div className="flex items-center justify-between mb-8">
