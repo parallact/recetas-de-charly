@@ -64,7 +64,12 @@
       "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --all --oneline -- \".github/workflows/node.js.yml\")",
       "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" show 53662e8:.github/workflows/node.js.yml)",
       "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" remote -v)",
-      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --oneline origin/master -5)"
+      "Bash(git -C \"C:\\\\Users\\\\tomim\\\\OneDrive\\\\Documentos\\\\programming\\\\personal\\\\recetas-de-charly\" log --oneline origin/master -5)",
+      "WebSearch",
+      "Bash(pnpm add:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(npm audit:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
