@@ -2,11 +2,54 @@
 
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { signIn } from '@/auth'
 import { isValidEmail, sanitizeEmail } from '@/lib/validators/email'
 
 interface RegisterResult {
   success: boolean
   error?: string
+}
+
+interface LoginResult {
+  error?: string
+}
+
+export async function loginUser(
+  email: string,
+  password: string,
+  redirectTo: string
+): Promise<LoginResult> {
+  const cleanEmail = sanitizeEmail(email)
+
+  if (!isValidEmail(cleanEmail)) {
+    return { error: 'El email no es válido' }
+  }
+
+  if (!password) {
+    return { error: 'La contraseña es requerida' }
+  }
+
+  // Validate credentials before calling signIn to avoid AuthError handling issues
+  const user = await prisma.users.findUnique({
+    where: { email: cleanEmail },
+  })
+
+  if (!user || !user.password) {
+    return { error: 'Email o contraseña incorrectos' }
+  }
+
+  const isValidPassword = await bcrypt.compare(password, user.password)
+  if (!isValidPassword) {
+    return { error: 'Email o contraseña incorrectos' }
+  }
+
+  // Credentials valid — signIn will redirect on success (throws NEXT_REDIRECT)
+  await signIn('credentials', {
+    email: cleanEmail,
+    password,
+    redirectTo,
+  })
+  return {}
 }
 
 export async function registerUser(

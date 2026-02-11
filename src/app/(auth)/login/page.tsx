@@ -11,7 +11,8 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { ChefHat, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { sanitizeEmail } from '@/lib/validators/email'
+import { loginUser } from '@/lib/actions/auth'
+import { sanitizeEmail, isValidEmail } from '@/lib/validators/email'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -27,18 +28,17 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
-        email: sanitizeEmail(email),
-        password,
-        redirect: false,
-      })
+      const cleanEmail = sanitizeEmail(email)
+      if (!isValidEmail(cleanEmail)) {
+        toast.error('El email no es válido')
+        setIsLoading(false)
+        return
+      }
+
+      const result = await loginUser(cleanEmail, password, redirectTo)
 
       if (result?.error) {
-        toast.error('Email o contraseña incorrectos')
-      } else {
-        toast.success('Sesion iniciada')
-        router.push(redirectTo)
-        router.refresh()
+        toast.error(result.error)
       }
     } catch {
       toast.error('Error al iniciar sesion')
