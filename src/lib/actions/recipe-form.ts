@@ -56,22 +56,17 @@ export async function createRecipe(input: RecipeFormInput) {
         }
       })
 
-      // Create ingredients
+      // Upsert ingredients and create recipe_ingredients
       for (let i = 0; i < input.ingredients.length; i++) {
         const ing = input.ingredients[i]
+        const name = ing.name.toLowerCase()
 
-        // Find or create ingredient
-        let ingredient = await tx.ingredients.findFirst({
-          where: { name: ing.name.toLowerCase() }
+        const ingredient = await tx.ingredients.upsert({
+          where: { name },
+          create: { name },
+          update: {},
         })
 
-        if (!ingredient) {
-          ingredient = await tx.ingredients.create({
-            data: { name: ing.name.toLowerCase() }
-          })
-        }
-
-        // Create recipe_ingredient
         await tx.recipe_ingredients.create({
           data: {
             recipe_id: recipe.id,
@@ -83,34 +78,34 @@ export async function createRecipe(input: RecipeFormInput) {
         })
       }
 
-      // Create instructions
-      for (let i = 0; i < input.instructions.length; i++) {
-        await tx.instructions.create({
-          data: {
+      // Batch create instructions
+      if (input.instructions.length > 0) {
+        await tx.instructions.createMany({
+          data: input.instructions.map((inst, i) => ({
             recipe_id: recipe.id,
             step_number: i + 1,
-            content: input.instructions[i].content,
-          }
+            content: inst.content,
+          }))
         })
       }
 
-      // Create recipe categories
-      for (const categoryId of input.category_ids) {
-        await tx.recipe_categories.create({
-          data: {
+      // Batch create recipe categories
+      if (input.category_ids.length > 0) {
+        await tx.recipe_categories.createMany({
+          data: input.category_ids.map(categoryId => ({
             recipe_id: recipe.id,
             category_id: categoryId,
-          }
+          }))
         })
       }
 
-      // Create recipe tags
-      for (const tagId of input.tag_ids) {
-        await tx.recipe_tags.create({
-          data: {
+      // Batch create recipe tags
+      if (input.tag_ids.length > 0) {
+        await tx.recipe_tags.createMany({
+          data: input.tag_ids.map(tagId => ({
             recipe_id: recipe.id,
             tag_id: tagId,
-          }
+          }))
         })
       }
 
@@ -171,19 +166,16 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       await tx.recipe_categories.deleteMany({ where: { recipe_id: recipeId } })
       await tx.recipe_tags.deleteMany({ where: { recipe_id: recipeId } })
 
-      // Recreate ingredients
+      // Upsert ingredients and create recipe_ingredients
       for (let i = 0; i < input.ingredients.length; i++) {
         const ing = input.ingredients[i]
+        const name = ing.name.toLowerCase()
 
-        let ingredient = await tx.ingredients.findFirst({
-          where: { name: ing.name.toLowerCase() }
+        const ingredient = await tx.ingredients.upsert({
+          where: { name },
+          create: { name },
+          update: {},
         })
-
-        if (!ingredient) {
-          ingredient = await tx.ingredients.create({
-            data: { name: ing.name.toLowerCase() }
-          })
-        }
 
         await tx.recipe_ingredients.create({
           data: {
@@ -196,34 +188,34 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
         })
       }
 
-      // Recreate instructions
-      for (let i = 0; i < input.instructions.length; i++) {
-        await tx.instructions.create({
-          data: {
+      // Batch create instructions
+      if (input.instructions.length > 0) {
+        await tx.instructions.createMany({
+          data: input.instructions.map((inst, i) => ({
             recipe_id: recipeId,
             step_number: i + 1,
-            content: input.instructions[i].content,
-          }
+            content: inst.content,
+          }))
         })
       }
 
-      // Recreate categories
-      for (const categoryId of input.category_ids) {
-        await tx.recipe_categories.create({
-          data: {
+      // Batch create categories
+      if (input.category_ids.length > 0) {
+        await tx.recipe_categories.createMany({
+          data: input.category_ids.map(categoryId => ({
             recipe_id: recipeId,
             category_id: categoryId,
-          }
+          }))
         })
       }
 
-      // Recreate tags
-      for (const tagId of input.tag_ids) {
-        await tx.recipe_tags.create({
-          data: {
+      // Batch create tags
+      if (input.tag_ids.length > 0) {
+        await tx.recipe_tags.createMany({
+          data: input.tag_ids.map(tagId => ({
             recipe_id: recipeId,
             tag_id: tagId,
-          }
+          }))
         })
       }
     })

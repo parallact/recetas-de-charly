@@ -48,17 +48,16 @@ async function getFeaturedRecipes(): Promise<(Recipe & { likes_count: number })[
 
 async function getCategoryCounts(): Promise<Record<string, number>> {
   try {
-    const recipeCats = await prisma.recipe_categories.findMany({
-      where: {
-        recipes: { is_public: true }
-      },
-      select: { category_id: true }
+    const grouped = await prisma.recipe_categories.groupBy({
+      by: ['category_id'],
+      where: { recipes: { is_public: true } },
+      _count: { category_id: true },
     })
 
     const counts: Record<string, number> = {}
-    recipeCats.forEach(item => {
-      counts[item.category_id] = (counts[item.category_id] || 0) + 1
-    })
+    for (const g of grouped) {
+      counts[g.category_id] = g._count.category_id
+    }
     return counts
   } catch {
     return {}

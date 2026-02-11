@@ -27,7 +27,11 @@ export async function getUploadUrl(
 
   const r2 = getR2Client()
   if (!r2) {
-    return { success: false, error: 'Storage no configurado' }
+    return { success: false, error: 'El almacenamiento de archivos no está configurado. Contacta al administrador.' }
+  }
+
+  if (!process.env.R2_PUBLIC_URL) {
+    return { success: false, error: 'URL pública de almacenamiento no configurada. Contacta al administrador.' }
   }
 
   try {

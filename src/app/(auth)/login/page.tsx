@@ -7,14 +7,17 @@ import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { ChefHat, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { sanitizeEmail } from '@/lib/validators/email'
 
 export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
+  const rawRedirect = searchParams.get('redirect') || '/'
+  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -25,7 +28,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn('credentials', {
-        email,
+        email: sanitizeEmail(email),
         password,
         redirect: false,
       })
@@ -77,9 +80,8 @@ export default function LoginPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

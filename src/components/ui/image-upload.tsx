@@ -118,16 +118,21 @@ export function ImageUpload({
         }
 
         // Upload directly to R2
-        const uploadResponse = await fetch(result.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        })
+        let uploadResponse: Response
+        try {
+          uploadResponse = await fetch(result.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+              'Content-Type': file.type,
+            },
+          })
+        } catch {
+          throw new Error('No se pudo conectar al servidor de archivos. Verifica tu conexión a internet.')
+        }
 
         if (!uploadResponse.ok) {
-          throw new Error('Error al subir la imagen')
+          throw new Error(`Error al subir la imagen (${uploadResponse.status})`)
         }
 
         // Complete progress
@@ -195,7 +200,11 @@ export function ImageUpload({
       return
     }
     try {
-      new URL(urlInput)
+      const parsed = new URL(urlInput)
+      if (parsed.protocol !== 'https:') {
+        toast.error('Solo se permiten URLs con HTTPS')
+        return
+      }
       onChange(urlInput.trim())
       setUrlInput('')
       setUseUrl(false)

@@ -7,15 +7,18 @@ import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { ChefHat, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { registerUser } from '@/lib/actions/auth'
+import { isValidEmail } from '@/lib/validators/email'
 
 export default function RegisterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') || '/'
+  const rawRedirect = searchParams.get('redirect') || '/'
+  const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   const [isLoading, setIsLoading] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -24,6 +27,11 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!isValidEmail(email)) {
+      toast.error('El email no es válido')
+      return
+    }
 
     if (password !== confirmPassword) {
       toast.error('Las contraseñas no coinciden')
@@ -95,6 +103,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              maxLength={50}
               disabled={isLoading}
             />
           </div>
@@ -107,30 +116,31 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              maxLength={255}
               disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              maxLength={128}
               disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              maxLength={128}
               disabled={isLoading}
             />
           </div>

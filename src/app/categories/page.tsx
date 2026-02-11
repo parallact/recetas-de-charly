@@ -5,21 +5,20 @@ import { prisma } from '@/lib/prisma'
 
 async function getCategories() {
   try {
-    // Fetch categories and recipe counts in parallel
-    const [categories, recipeCategoriesData] = await Promise.all([
+    const [categories, counts] = await Promise.all([
       prisma.categories.findMany({
         select: { id: true, name: true, slug: true, icon: true, description: true },
         orderBy: { name: 'asc' }
       }),
-      prisma.recipe_categories.findMany({
-        select: { category_id: true }
+      prisma.recipe_categories.groupBy({
+        by: ['category_id'],
+        _count: { category_id: true },
       })
     ])
 
-    // Count recipes per category in memory
     const countsByCategory: Record<string, number> = {}
-    for (const rc of recipeCategoriesData) {
-      countsByCategory[rc.category_id] = (countsByCategory[rc.category_id] || 0) + 1
+    for (const c of counts) {
+      countsByCategory[c.category_id] = c._count.category_id
     }
 
     return categories.map((cat) => ({

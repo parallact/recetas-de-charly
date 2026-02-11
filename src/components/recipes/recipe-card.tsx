@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Clock, Users, Heart, ChefHat, Tag } from 'lucide-react'
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, type Difficulty } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 
 // Tag type from join
 interface TagData {
@@ -44,7 +44,7 @@ interface RecipeCardProps {
   showAuthor?: boolean
 }
 
-export function RecipeCard({
+export const RecipeCard = memo(function RecipeCard({
   recipe,
   actions,
   useIconPlaceholder = false,
@@ -157,4 +157,4 @@ export function RecipeCard({
       </CardContent>
     </Card>
   )
-}
+})
