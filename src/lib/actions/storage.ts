@@ -18,11 +18,24 @@ interface UploadUrlResult {
 export async function getUploadUrl(
   filename: string,
   contentType: string,
-  folder: 'recipes' | 'avatars' = 'recipes'
+  folder: 'recipes' | 'avatars' = 'recipes',
+  fileSize?: number
 ): Promise<UploadUrlResult> {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error: error || 'No autenticado' }
+  }
+
+  // Validate content type
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+  if (!ALLOWED_TYPES.includes(contentType)) {
+    return { success: false, error: 'Tipo de archivo no permitido' }
+  }
+
+  // Validate file size
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+  if (fileSize && fileSize > MAX_FILE_SIZE) {
+    return { success: false, error: 'El archivo es demasiado grande (máximo 5MB)' }
   }
 
   const r2 = getR2Client()
@@ -47,7 +60,7 @@ export async function getUploadUrl(
       ContentType: contentType,
     })
 
-    const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 3600 })
+    const uploadUrl = await getSignedUrl(r2, command, { expiresIn: 600 })
 
     // Public URL for accessing the file after upload
     const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`

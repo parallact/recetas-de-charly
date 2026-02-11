@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { handleActionError, isPrismaError } from './error-utils'
+import { requireAuth } from './utils'
 
 // Get all tags
 export async function getAllTags() {
@@ -23,6 +24,11 @@ export async function getAllTags() {
 
 // Create a new tag
 export async function createTag(name: string, slug: string) {
+  const { user, error } = await requireAuth()
+  if (!user) {
+    return { success: false, error: error || 'No autenticado', data: null }
+  }
+
   try {
     const tag = await prisma.tags.create({
       data: {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Upload, CheckCircle2 } from 'lucide-react'
@@ -223,11 +224,12 @@ export function ImageUpload({
           aspectRatioClass,
           rounded ? 'rounded-full' : 'rounded-xl'
         )}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={value}
             alt="Preview"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           {/* Overlay on hover */}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
