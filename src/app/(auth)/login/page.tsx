@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +15,6 @@ import { loginUser } from '@/lib/actions/auth'
 import { sanitizeEmail, isValidEmail } from '@/lib/validators/email'
 
 export default function LoginPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get('redirect') || '/'
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
