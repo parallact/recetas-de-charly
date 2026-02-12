@@ -46,6 +46,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const { data: session } = useSession()
   const t = useTranslations('imageUpload')
+  const te = useTranslations('serverErrors')
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -117,7 +118,7 @@ export function ImageUpload({
         const result = await getUploadUrl(file.name, file.type, folder)
 
         if (!result.success || !result.uploadUrl || !result.publicUrl) {
-          throw new Error(result.error || t('uploadUrlError'))
+          throw new Error(result.error ? te(result.error) : t('uploadUrlError'))
         }
 
         // Upload directly to R2

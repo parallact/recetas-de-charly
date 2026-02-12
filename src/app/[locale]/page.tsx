@@ -3,14 +3,11 @@ export const dynamic = 'force-dynamic'
 import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import {
   ChefHat,
   Search,
   Bookmark,
-  Sparkles,
   ArrowRight,
-  Plus
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { RecipeCard } from '@/components/recipes/recipe-card'
@@ -83,12 +80,6 @@ export default async function HomePage() {
       <section className="relative bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-950 dark:via-amber-950 dark:to-yellow-950">
         <div className="container mx-auto max-w-7xl px-4 py-20 md:py-32">
           <div className="max-w-3xl mx-auto text-center">
-            <FadeIn delay={0.1}>
-              <Badge variant="secondary" className="mb-4">
-                <Sparkles className="h-3 w-3 mr-1" />
-                {t('newVersionAvailable')}
-              </Badge>
-            </FadeIn>
             <SlideIn direction="up" delay={0.2} duration={0.7}>
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
                 {t('heroTitle')}{' '}
@@ -96,33 +87,9 @@ export default async function HomePage() {
               </h1>
             </SlideIn>
             <FadeIn delay={0.4}>
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
                 {t('heroDescription')}
               </p>
-            </FadeIn>
-            <FadeIn delay={0.6}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link href="/recipes">
-                  <Search className="mr-2 h-5 w-5" />
-                  {t('exploreRecipes')}
-                </Link>
-              </Button>
-              {user ? (
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/recipes/new">
-                    <Plus className="mr-2 h-5 w-5" />
-                    {t('createNewRecipe')}
-                  </Link>
-                </Button>
-              ) : (
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/register">
-                    {t('createFreeAccount')}
-                  </Link>
-                </Button>
-              )}
-            </div>
             </FadeIn>
           </div>
         </div>
@@ -257,24 +224,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section - Solo para usuarios no logueados */}
-      {!user && (
-        <section className="py-16 bg-primary text-primary-foreground">
-          <FadeIn>
-            <div className="container mx-auto max-w-7xl px-4 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                {t('joinCommunity')}
-              </h2>
-              <p className="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-                {t('joinCommunityDesc')}
-              </p>
-              <Button size="lg" variant="secondary" asChild>
-                <Link href="/register">{t('createFreeAccount')}</Link>
-              </Button>
-            </div>
-          </FadeIn>
-        </section>
-      )}
     </div>
   )
 }

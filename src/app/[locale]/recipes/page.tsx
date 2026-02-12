@@ -2,6 +2,7 @@ import { Link } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Plus, ChefHat } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { prisma } from '@/lib/prisma'
 import type { Recipe, Category } from '@/lib/types'
 import { RecipeCard } from '@/components/recipes/recipe-card'
@@ -144,7 +145,7 @@ export default async function RecipesPage({
         <Link href="/recipes">
           <Badge
             variant={!categorySlug ? 'default' : 'outline'}
-            className="cursor-pointer hover:bg-primary/90"
+            className={cn("cursor-pointer", !categorySlug ? "hover:bg-primary/80" : "hover:bg-muted")}
           >
             {tc('all')}
           </Badge>
@@ -153,7 +154,7 @@ export default async function RecipesPage({
           <Link key={category.id} href={`/recipes?category=${category.slug}`}>
             <Badge
               variant={categorySlug === category.slug ? 'default' : 'outline'}
-              className="cursor-pointer hover:bg-primary/90"
+              className={cn("cursor-pointer", categorySlug === category.slug ? "hover:bg-primary/80" : "hover:bg-muted")}
             >
               {category.icon} {tcat.has(category.slug) ? tcat(category.slug) : category.name}
             </Badge>
