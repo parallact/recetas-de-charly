@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/form'
 import { Separator } from '@/components/ui/separator'
 import { ChefHat, Pencil, Bookmark, Heart, Calendar, Loader2, User } from 'lucide-react'
+import { cn } from '@/lib/utils/cn'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
@@ -43,20 +44,23 @@ function createProfileSchema(te: (key: string) => string) {
   return z.object({
     display_name: z
       .string()
+      .refine(
+        val => val.length === 0 || val.trim().length > 0,
+        te('nameTooShort')
+      )
       .transform(val => val.trim())
       .pipe(
         z.string()
           .min(2, te('nameTooShort'))
           .max(50, te('nameTooLong'))
           .regex(NAME_REGEX, te('nameInvalidChars'))
-      )
-      .or(z.literal('')),
+          .or(z.literal(''))
+      ),
     avatar_url: z.union([z.string().url(), z.literal(''), z.null()]),
     bio: z
       .string()
       .max(300, te('bioTooLong'))
-      .refine(val => !val || val.trim().length > 0, te('bioOnlySpaces'))
-      .or(z.literal('')),
+      .refine(val => val.length === 0 || val.trim().length > 0, te('bioOnlySpaces')),
   })
 }
 
@@ -325,8 +329,11 @@ export default function ProfilePage() {
                               <FormItem>
                                 <div className="flex items-center justify-between">
                                   <FormLabel className="text-base">{t('bio')}</FormLabel>
-                                  <span className="text-xs text-muted-foreground tabular-nums">
-                                    {field.value?.length || 0}/300
+                                  <span className={cn(
+                                    "text-xs tabular-nums",
+                                    (field.value?.length || 0) >= 300 ? "text-destructive" : "text-muted-foreground"
+                                  )}>
+                                    {Math.min(field.value?.length || 0, 300)}/300
                                   </span>
                                 </div>
                                 <FormControl>
@@ -336,6 +343,9 @@ export default function ProfilePage() {
                                     className="resize-none"
                                     maxLength={300}
                                     {...field}
+                                    onChange={(e) => {
+                                      field.onChange(e.target.value.slice(0, 300))
+                                    }}
                                   />
                                 </FormControl>
                                 <FormMessage />
