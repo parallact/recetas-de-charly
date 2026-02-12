@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Minus, Plus } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface Ingredient {
   quantity: number | null
@@ -18,6 +19,7 @@ interface ServingsScalerProps {
 export function ServingsScaler({ originalServings, ingredients }: ServingsScalerProps) {
   const [servings, setServings] = useState(originalServings)
   const ratio = servings / originalServings
+  const t = useTranslations('recipes')
 
   const decrease = () => setServings(s => Math.max(1, s - 1))
   const increase = () => setServings(s => Math.min(100, s + 1))
@@ -35,7 +37,7 @@ export function ServingsScaler({ originalServings, ingredients }: ServingsScaler
   return (
     <div className="bg-muted/50 rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold">Ingredientes</h2>
+        <h2 className="text-xl font-bold">{t('ingredients')}</h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -47,7 +49,7 @@ export function ServingsScaler({ originalServings, ingredients }: ServingsScaler
             <Minus className="h-4 w-4" />
           </Button>
           <span className="text-sm min-w-[80px] text-center">
-            {servings} {servings === 1 ? 'porcion' : 'porciones'}
+            {servings} {servings === 1 ? t('serving') : t('servingPlural')}
           </span>
           <Button
             variant="outline"
@@ -79,7 +81,7 @@ export function ServingsScaler({ originalServings, ingredients }: ServingsScaler
         </ul>
       ) : (
         <p className="text-muted-foreground text-sm">
-          No hay ingredientes listados
+          {t('noIngredients')}
         </p>
       )}
     </div>

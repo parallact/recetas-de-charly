@@ -1,35 +1,38 @@
 'use server'
 
+import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { requireAuth } from './utils'
 import { handleActionError, isPrismaError } from './error-utils'
 
-interface IngredientInput {
-  name: string
-  quantity: number | null
-  unit: string | null
-}
+const ingredientInputSchema = z.object({
+  name: z.string().min(1).max(200).trim(),
+  quantity: z.number().min(0).nullable(),
+  unit: z.string().max(50).nullable(),
+})
 
-interface InstructionInput {
-  content: string
-}
+const instructionInputSchema = z.object({
+  content: z.string().min(1).max(2000).trim(),
+})
 
-interface RecipeFormInput {
-  title: string
-  slug: string
-  description: string | null
-  image_url: string | null
-  prep_time: number | null
-  cooking_time: number | null
-  servings: number
-  difficulty: string
-  is_public: boolean
-  ingredients: IngredientInput[]
-  instructions: InstructionInput[]
-  category_ids: string[]
-  tag_ids: string[]
-}
+const recipeInputSchema = z.object({
+  title: z.string().min(1).max(200).trim(),
+  slug: z.string().min(1).max(200),
+  description: z.string().max(1000).nullable(),
+  image_url: z.union([z.string().url(), z.literal(''), z.null()]),
+  prep_time: z.number().int().min(0).max(1440).nullable(),
+  cooking_time: z.number().int().min(0).max(1440).nullable(),
+  servings: z.number().int().min(1).max(100),
+  difficulty: z.string().min(1).max(20),
+  is_public: z.boolean(),
+  ingredients: z.array(ingredientInputSchema).min(1),
+  instructions: z.array(instructionInputSchema).min(1),
+  category_ids: z.array(z.string()),
+  tag_ids: z.array(z.string()),
+})
+
+type RecipeFormInput = z.infer<typeof recipeInputSchema>
 
 // Create a new recipe atomically
 export async function createRecipe(input: RecipeFormInput) {
@@ -38,27 +41,34 @@ export async function createRecipe(input: RecipeFormInput) {
     return { success: false, error, recipeId: null }
   }
 
+  const parsed = recipeInputSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: 'Datos de receta invalidos', recipeId: null }
+  }
+
+  const data = parsed.data
+
   try {
     const recipeId = await prisma.$transaction(async (tx) => {
       // Create the recipe
       const recipe = await tx.recipes.create({
         data: {
           user_id: user.id,
-          title: input.title,
-          slug: input.slug,
-          description: input.description,
-          image_url: input.image_url,
-          prep_time: input.prep_time,
-          cooking_time: input.cooking_time,
-          servings: input.servings,
-          difficulty: input.difficulty,
-          is_public: input.is_public,
+          title: data.title,
+          slug: data.slug,
+          description: data.description,
+          image_url: data.image_url,
+          prep_time: data.prep_time,
+          cooking_time: data.cooking_time,
+          servings: data.servings,
+          difficulty: data.difficulty,
+          is_public: data.is_public,
         }
       })
 
       // Upsert ingredients and create recipe_ingredients
-      for (let i = 0; i < input.ingredients.length; i++) {
-        const ing = input.ingredients[i]
+      for (let i = 0; i < data.ingredients.length; i++) {
+        const ing = data.ingredients[i]
         const name = ing.name.toLowerCase()
 
         const ingredient = await tx.ingredients.upsert({
@@ -79,9 +89,9 @@ export async function createRecipe(input: RecipeFormInput) {
       }
 
       // Batch create instructions
-      if (input.instructions.length > 0) {
+      if (data.instructions.length > 0) {
         await tx.instructions.createMany({
-          data: input.instructions.map((inst, i) => ({
+          data: data.instructions.map((inst, i) => ({
             recipe_id: recipe.id,
             step_number: i + 1,
             content: inst.content,
@@ -90,9 +100,9 @@ export async function createRecipe(input: RecipeFormInput) {
       }
 
       // Batch create recipe categories
-      if (input.category_ids.length > 0) {
+      if (data.category_ids.length > 0) {
         await tx.recipe_categories.createMany({
-          data: input.category_ids.map(categoryId => ({
+          data: data.category_ids.map(categoryId => ({
             recipe_id: recipe.id,
             category_id: categoryId,
           }))
@@ -100,9 +110,9 @@ export async function createRecipe(input: RecipeFormInput) {
       }
 
       // Batch create recipe tags
-      if (input.tag_ids.length > 0) {
+      if (data.tag_ids.length > 0) {
         await tx.recipe_tags.createMany({
-          data: input.tag_ids.map(tagId => ({
+          data: data.tag_ids.map(tagId => ({
             recipe_id: recipe.id,
             tag_id: tagId,
           }))
@@ -131,6 +141,13 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
     return { success: false, error }
   }
 
+  const parsed = recipeInputSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: 'Datos de receta invalidos' }
+  }
+
+  const data = parsed.data
+
   try {
     // Verify ownership
     const existingRecipe = await prisma.recipes.findUnique({
@@ -147,15 +164,15 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       await tx.recipes.update({
         where: { id: recipeId },
         data: {
-          title: input.title,
-          slug: input.slug,
-          description: input.description,
-          image_url: input.image_url,
-          prep_time: input.prep_time,
-          cooking_time: input.cooking_time,
-          servings: input.servings,
-          difficulty: input.difficulty,
-          is_public: input.is_public,
+          title: data.title,
+          slug: data.slug,
+          description: data.description,
+          image_url: data.image_url,
+          prep_time: data.prep_time,
+          cooking_time: data.cooking_time,
+          servings: data.servings,
+          difficulty: data.difficulty,
+          is_public: data.is_public,
           updated_at: new Date(),
         }
       })
@@ -167,8 +184,8 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       await tx.recipe_tags.deleteMany({ where: { recipe_id: recipeId } })
 
       // Upsert ingredients and create recipe_ingredients
-      for (let i = 0; i < input.ingredients.length; i++) {
-        const ing = input.ingredients[i]
+      for (let i = 0; i < data.ingredients.length; i++) {
+        const ing = data.ingredients[i]
         const name = ing.name.toLowerCase()
 
         const ingredient = await tx.ingredients.upsert({
@@ -189,9 +206,9 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       }
 
       // Batch create instructions
-      if (input.instructions.length > 0) {
+      if (data.instructions.length > 0) {
         await tx.instructions.createMany({
-          data: input.instructions.map((inst, i) => ({
+          data: data.instructions.map((inst, i) => ({
             recipe_id: recipeId,
             step_number: i + 1,
             content: inst.content,
@@ -200,9 +217,9 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       }
 
       // Batch create categories
-      if (input.category_ids.length > 0) {
+      if (data.category_ids.length > 0) {
         await tx.recipe_categories.createMany({
-          data: input.category_ids.map(categoryId => ({
+          data: data.category_ids.map(categoryId => ({
             recipe_id: recipeId,
             category_id: categoryId,
           }))
@@ -210,9 +227,9 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
       }
 
       // Batch create tags
-      if (input.tag_ids.length > 0) {
+      if (data.tag_ids.length > 0) {
         await tx.recipe_tags.createMany({
-          data: input.tag_ids.map(tagId => ({
+          data: data.tag_ids.map(tagId => ({
             recipe_id: recipeId,
             tag_id: tagId,
           }))

@@ -4,6 +4,7 @@ import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from './utils'
 import { handleActionError } from './error-utils'
+import { getNameError } from '@/lib/validators/name'
 
 interface ProfileData {
   display_name?: string | null
@@ -51,6 +52,22 @@ export async function updateUserProfile(data: ProfileData) {
   }
 
   try {
+    // Validate name if provided
+    if (data.display_name) {
+      const nameError = getNameError(data.display_name)
+      if (nameError) {
+        return { success: false, error: nameError }
+      }
+    }
+
+    // Validate bio
+    if (data.bio && !data.bio.trim()) {
+      return { success: false, error: 'La bio no puede contener solo espacios' }
+    }
+    if (data.bio && data.bio.length > 300) {
+      return { success: false, error: 'La bio no puede exceder 300 caracteres' }
+    }
+
     await prisma.profiles.update({
       where: { id: user.id },
       data: {

@@ -123,3 +123,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide browser native password reveal (Edge/Chrome) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+/* Ensure toasts are visible on mobile with safe-area */
+[data-sonner-toaster] {
+  --offset: max(24px, env(safe-area-inset-bottom)) !important;
+}

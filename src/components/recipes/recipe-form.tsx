@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter } from '@/i18n/navigation'
+import { Link } from '@/i18n/navigation'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { useSession } from 'next-auth/react'
 import { recipeSchema, generateSlug, type RecipeFormData } from '@/lib/schemas/recipe'
 import { RecipeFormFields } from './recipe-form-fields'
 import { createRecipe, updateRecipe } from '@/lib/actions/recipe-form'
+import { useTranslations } from 'next-intl'
 
 interface RecipeFormProps {
   mode: 'create' | 'edit'
@@ -47,6 +48,8 @@ export function RecipeForm({
 }: RecipeFormProps) {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const t = useTranslations('recipeForm')
+  const tc = useTranslations('common')
 
   const [loading, setLoading] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories)
@@ -119,7 +122,7 @@ export function RecipeForm({
     if (status === 'loading') return
 
     if (!session?.user) {
-      toast.error('Debes iniciar sesion')
+      toast.error(tc('requireLogin'))
       router.push('/login')
       return
     }
@@ -129,12 +132,12 @@ export function RecipeForm({
     const validInstructions = data.instructions.filter(i => i.content.trim())
 
     if (validIngredients.length === 0) {
-      toast.error('Agrega al menos un ingrediente con nombre')
+      toast.error(t('addIngredientError'))
       return
     }
 
     if (validInstructions.length === 0) {
-      toast.error('Agrega al menos un paso con contenido')
+      toast.error(t('addStepError'))
       return
     }
 
@@ -175,30 +178,30 @@ export function RecipeForm({
         const result = await createRecipe(formInput)
 
         if (!result.success) {
-          toast.error(result.error || 'Error al crear la receta')
+          toast.error(result.error || t('createError'))
           return
         }
 
-        toast.success('Receta creada exitosamente!')
+        toast.success(t('createSuccess'))
         router.push(`/recipes/${result.recipeId}`)
       } else {
         if (!recipeId) {
-          toast.error('ID de receta no encontrado')
+          toast.error(t('idNotFound'))
           return
         }
 
         const result = await updateRecipe(recipeId, formInput)
 
         if (!result.success) {
-          toast.error(result.error || 'Error al actualizar la receta')
+          toast.error(result.error || t('updateError'))
           return
         }
 
-        toast.success('Receta actualizada exitosamente!')
+        toast.success(t('updateSuccess'))
         router.push(`/recipes/${recipeId}`)
       }
     } catch {
-      toast.error(`Error al ${mode === 'create' ? 'crear' : 'actualizar'} la receta`)
+      toast.error(mode === 'create' ? t('createError') : t('updateError'))
     } finally {
       setLoading(false)
     }
@@ -212,7 +215,7 @@ export function RecipeForm({
         <Button variant="ghost" size="sm" asChild>
           <Link href={backUrl}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            {isCreate ? 'Volver a recetas' : 'Volver a mis recetas'}
+            {isCreate ? tc('backToRecipes') : tc('backToMyRecipes')}
           </Link>
         </Button>
       </div>
@@ -224,11 +227,11 @@ export function RecipeForm({
               <ChefHat className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle>{isCreate ? 'Nueva Receta' : 'Editar Receta'}</CardTitle>
+              <CardTitle>{isCreate ? t('newRecipe') : t('editRecipe')}</CardTitle>
               <CardDescription>
                 {isCreate
-                  ? 'Comparte tu receta con la comunidad'
-                  : 'Modifica los detalles de tu receta'}
+                  ? t('shareSubtitle')
+                  : t('editSubtitle')}
               </CardDescription>
             </div>
           </div>
@@ -247,18 +250,18 @@ export function RecipeForm({
               {/* Submit */}
               <div className="flex justify-end gap-4">
                 <Button type="button" variant="outline" asChild>
-                  <Link href={backUrl}>Cancelar</Link>
+                  <Link href={backUrl}>{tc('cancel')}</Link>
                 </Button>
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Guardando...
+                      {tc('saving')}
                     </>
                   ) : isCreate ? (
-                    'Publicar Receta'
+                    t('publish')
                   ) : (
-                    'Guardar Cambios'
+                    t('saveChanges')
                   )}
                 </Button>
               </div>

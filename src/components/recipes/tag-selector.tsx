@@ -8,6 +8,7 @@ import { X, Plus, Tag, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { getAllTags, createTag } from '@/lib/actions/tags'
+import { useTranslations } from 'next-intl'
 
 interface TagData {
   id: string
@@ -42,6 +43,8 @@ export function TagSelector({
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showInput, setShowInput] = useState(false)
+  const t = useTranslations('tags')
+  const tc = useTranslations('common')
 
   useEffect(() => {
     async function loadTags() {
@@ -91,13 +94,13 @@ export function TagSelector({
     const result = await createTag(trimmedName, slug)
 
     if (!result.success) {
-      toast.error(result.error || 'Error al crear el tag')
+      toast.error(result.error || t('createError'))
     } else if (result.data) {
       setTags(prev => [...prev, result.data!].sort((a, b) => a.name.localeCompare(b.name)))
       onTagsChange([...selectedTags, result.data.id])
       setNewTagName('')
       setShowInput(false)
-      toast.success('Tag creado')
+      toast.success(t('tagCreated'))
     }
 
     setIsCreating(false)
@@ -127,7 +130,7 @@ export function TagSelector({
     return (
       <div className={cn('flex items-center gap-2', className)}>
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Cargando tags...</span>
+        <span className="text-sm text-muted-foreground">{t('loadingTags')}</span>
       </div>
     )
   }
@@ -182,7 +185,7 @@ export function TagSelector({
                 value={newTagName}
                 onChange={(e) => setNewTagName(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Nombre del tag..."
+                placeholder={t('tagNamePlaceholder')}
                 className="h-8 text-sm"
                 autoFocus
               />
@@ -195,7 +198,7 @@ export function TagSelector({
                 {isCreating ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Crear'
+                  tc('create')
                 )}
               </Button>
               <Button
@@ -207,7 +210,7 @@ export function TagSelector({
                   setNewTagName('')
                 }}
               >
-                Cancelar
+                {tc('cancel')}
               </Button>
             </div>
           ) : (
@@ -219,7 +222,7 @@ export function TagSelector({
               className="text-muted-foreground"
             >
               <Tag className="h-4 w-4 mr-1" />
-              Crear nuevo tag
+              {t('createNewTag')}
             </Button>
           )}
         </div>
@@ -227,7 +230,7 @@ export function TagSelector({
 
       {tags.length === 0 && !showInput && (
         <p className="text-sm text-muted-foreground">
-          No hay tags disponibles. {allowCreate && 'Crea el primero!'}
+          {t('noTags')}
         </p>
       )}
     </div>

@@ -7,6 +7,7 @@ import { StickyNote, Plus, Pencil, Trash2, Loader2, Lock, Globe } from 'lucide-r
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { getRecipeNotes, addRecipeNote, updateRecipeNote, deleteRecipeNote } from '@/lib/actions/notes'
+import { useTranslations } from 'next-intl'
 
 interface RecipeNote {
   id: string
@@ -30,6 +31,8 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
+  const t = useTranslations('notes')
+  const tc = useTranslations('common')
 
   useEffect(() => {
     let isMounted = true
@@ -62,12 +65,12 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await addRecipeNote(recipeId, newNote.trim(), isPrivate)
 
     if (!result.success) {
-      toast.error(result.error || 'Error al guardar la nota')
+      toast.error(result.error || t('saveError'))
     } else if (result.data) {
       setNotes(prev => [result.data!, ...prev])
       setNewNote('')
       setIsAdding(false)
-      toast.success('Nota guardada')
+      toast.success(t('noteSaved'))
     }
 
     setSaving(false)
@@ -81,7 +84,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await updateRecipeNote(noteId, editContent.trim())
 
     if (!result.success) {
-      toast.error(result.error || 'Error al actualizar la nota')
+      toast.error(result.error || t('updateError'))
     } else {
       setNotes(prev =>
         prev.map(n =>
@@ -89,7 +92,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
         )
       )
       setEditingId(null)
-      toast.success('Nota actualizada')
+      toast.success(t('noteUpdated'))
     }
 
     setSaving(false)
@@ -99,10 +102,10 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await deleteRecipeNote(noteId)
 
     if (!result.success) {
-      toast.error(result.error || 'Error al eliminar la nota')
+      toast.error(result.error || t('deleteError'))
     } else {
       setNotes(prev => prev.filter(n => n.id !== noteId))
-      toast.success('Nota eliminada')
+      toast.success(t('noteDeleted'))
     }
   }
 
@@ -116,7 +119,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <StickyNote className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Mis Notas</h3>
+          <h3 className="font-semibold">{t('title')}</h3>
         </div>
         {!isAdding && userId && (
           <Button
@@ -125,7 +128,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
             onClick={() => setIsAdding(true)}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Agregar
+            {tc('add')}
           </Button>
         )}
       </div>
@@ -142,7 +145,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
               <Textarea
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="Escribe una nota personal sobre esta receta..."
+                placeholder={t('placeholder')}
                 rows={3}
                 className="resize-none"
               />
@@ -158,12 +161,12 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                   {isPrivate ? (
                     <>
                       <Lock className="h-3 w-3" />
-                      Privada
+                      {t('private')}
                     </>
                   ) : (
                     <>
                       <Globe className="h-3 w-3" />
-                      Publica
+                      {t('public')}
                     </>
                   )}
                 </button>
@@ -176,7 +179,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                       setNewNote('')
                     }}
                   >
-                    Cancelar
+                    {tc('cancel')}
                   </Button>
                   <Button
                     size="sm"
@@ -186,7 +189,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      'Guardar'
+                      tc('save')
                     )}
                   </Button>
                 </div>
@@ -216,7 +219,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                           size="sm"
                           onClick={() => setEditingId(null)}
                         >
-                          Cancelar
+                          {tc('cancel')}
                         </Button>
                         <Button
                           size="sm"
@@ -226,7 +229,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                           {saving ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            'Guardar'
+                            tc('save')
                           )}
                         </Button>
                       </div>
@@ -274,7 +277,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
             </div>
           ) : !isAdding ? (
             <p className="text-sm text-muted-foreground text-center py-4">
-              No tienes notas para esta receta
+              {t('noNotes')}
             </p>
           ) : null}
         </>

@@ -3,7 +3,9 @@
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { signIn } from '@/auth'
-import { isValidEmail, sanitizeEmail } from '@/lib/validators/email'
+import { sanitizeEmail, getEmailError } from '@/lib/validators/email'
+import { getNameError } from '@/lib/validators/name'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface RegisterResult {
   success: boolean
@@ -21,8 +23,13 @@ export async function loginUser(
 ): Promise<LoginResult> {
   const cleanEmail = sanitizeEmail(email)
 
-  if (!isValidEmail(cleanEmail)) {
-    return { error: 'El email no es válido' }
+  if (!checkRateLimit(`login:${cleanEmail}`, 5, 15 * 60 * 1000)) {
+    return { error: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' }
+  }
+
+  const emailError = getEmailError(cleanEmail)
+  if (emailError) {
+    return { error: emailError }
   }
 
   if (!password) {
@@ -63,13 +70,15 @@ export async function registerUser(
       return { success: false, error: 'Todos los campos son requeridos' }
     }
 
-    // Max length validation
-    if (name.length > 50) {
-      return { success: false, error: 'El nombre no puede tener más de 50 caracteres' }
+    const cleanEmailForLimit = sanitizeEmail(email)
+    if (!checkRateLimit(`register:${cleanEmailForLimit}`, 3, 60 * 60 * 1000)) {
+      return { success: false, error: 'Demasiados intentos de registro. Intenta de nuevo en 1 hora.' }
     }
 
-    if (email.length > 255) {
-      return { success: false, error: 'El email no puede tener más de 255 caracteres' }
+    // Name validation
+    const nameError = getNameError(name)
+    if (nameError) {
+      return { success: false, error: nameError }
     }
 
     if (password.length > 128) {
@@ -78,8 +87,13 @@ export async function registerUser(
 
     // Email validation
     const cleanEmail = sanitizeEmail(email)
-    if (!isValidEmail(cleanEmail)) {
-      return { success: false, error: 'El email no es válido' }
+    const emailError = getEmailError(cleanEmail)
+    if (emailError) {
+      return { success: false, error: emailError }
+    }
+
+    if (!password.trim()) {
+      return { success: false, error: 'La contraseña no puede contener solo espacios' }
     }
 
     if (password.length < 6) {

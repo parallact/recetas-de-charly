@@ -1,11 +1,14 @@
+'use client'
+
 import Image from 'next/image'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Clock, Users, Heart, ChefHat, Tag } from 'lucide-react'
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS, type Difficulty } from '@/lib/constants'
+import { DIFFICULTY_COLORS, type Difficulty } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { memo, type ReactNode } from 'react'
+import { useTranslations } from 'next-intl'
 
 // Tag type from join
 interface TagData {
@@ -52,6 +55,11 @@ export const RecipeCard = memo(function RecipeCard({
   showTags = false,
   showAuthor = false
 }: RecipeCardProps) {
+  const t = useTranslations('recipes')
+  const tc = useTranslations('common')
+  const td = useTranslations('difficulty')
+  const tl = useTranslations('likes')
+
   const difficulty = recipe.difficulty as Difficulty | null
 
   // Get author name from either profiles (join) or profile key
@@ -92,7 +100,7 @@ export const RecipeCard = memo(function RecipeCard({
             className={`absolute top-2 left-2 ${DIFFICULTY_COLORS[difficulty]}`}
             variant="secondary"
           >
-            {DIFFICULTY_LABELS[difficulty]}
+            {td(difficulty)}
           </Badge>
         )}
         {/* Action buttons area - stops propagation to prevent navigation */}
@@ -133,25 +141,25 @@ export const RecipeCard = memo(function RecipeCard({
         )}
         <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
           {recipe.cooking_time && (
-            <div className="flex items-center gap-1" title="Tiempo de coccion">
+            <div className="flex items-center gap-1" title={t('cookingTime')}>
               <Clock className="h-4 w-4" aria-hidden="true" />
               <span>{recipe.cooking_time} min</span>
             </div>
           )}
           {recipe.servings && (
-            <div className="flex items-center gap-1" title="Porciones">
+            <div className="flex items-center gap-1" title={tc('servings')}>
               <Users className="h-4 w-4" aria-hidden="true" />
               <span>{recipe.servings}</span>
             </div>
           )}
-          <div className="flex items-center gap-1" title="Me gusta">
+          <div className="flex items-center gap-1" title={tl('like')}>
             <Heart className="h-4 w-4" aria-hidden="true" />
             <span>{recipe.likes_count ?? 0}</span>
           </div>
         </div>
         {showAuthor && authorName && (
           <p className="text-xs text-muted-foreground mt-2">
-            por {authorName}
+            {tc('by')} {authorName}
           </p>
         )}
       </CardContent>

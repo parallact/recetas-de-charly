@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { Link, useRouter, usePathname } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ import {
   BookOpen
 } from 'lucide-react'
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useTranslations, useLocale } from 'next-intl'
 import { signOut, useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { AuthUser } from '@/lib/auth/get-user'
@@ -45,6 +45,9 @@ export function Header({ initialUser }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+  const locale = useLocale()
+  const t = useTranslations('common')
   const { data: session, status } = useSession()
 
   // Derive user from session or initial value - no useEffect needed
@@ -67,11 +70,11 @@ export function Header({ initialUser }: HeaderProps) {
   const confirmLogout = async () => {
     try {
       await signOut({ redirect: false })
-      toast.success('Sesion cerrada')
+      toast.success(t('loggedOut'))
       router.push('/')
       router.refresh()
     } catch {
-      toast.error('Error al cerrar sesion')
+      toast.error(t('logoutError'))
     }
     setShowLogoutDialog(false)
     setMobileMenuOpen(false)
@@ -83,7 +86,7 @@ export function Header({ initialUser }: HeaderProps) {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl">
           <ChefHat className="h-6 w-6 text-primary" />
-          <span className="hidden sm:inline">Recetas de Charly</span>
+          <span className="hidden sm:inline">{t('appName')}</span>
         </Link>
 
         {/* Search Bar - Desktop */}
@@ -91,17 +94,26 @@ export function Header({ initialUser }: HeaderProps) {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              router.replace(pathname, { locale: locale === 'es' ? 'en' : 'es' })
+            }}
+          >
+            {locale === 'es' ? 'EN' : 'ES'}
+          </Button>
           {user ? (
             <>
               <Button variant="ghost" size="sm" asChild>
                 <Link href="/recipes/new">
                   <Plus className="h-4 w-4 mr-1.5" />
-                  Nueva Receta
+                  {t('newRecipe')}
                 </Link>
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="Menu de usuario">
+                  <Button variant="ghost" size="icon" className="rounded-full" aria-label={t('userMenu')}>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.avatar_url} alt={user.display_name || user.email} />
                       <AvatarFallback>
@@ -114,25 +126,25 @@ export function Header({ initialUser }: HeaderProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/profile">
                       <User className="mr-2 h-4 w-4" />
-                      Mi Perfil
+                      {t('myProfile')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/my-recipes">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Mis Recetas
+                      {t('myRecipes')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/bookmarks">
                       <Bookmark className="mr-2 h-4 w-4" />
-                      Mis Guardados
+                      {t('myBookmarks')}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setShowLogoutDialog(true)}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Cerrar Sesion
+                    {t('logout')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -140,10 +152,10 @@ export function Header({ initialUser }: HeaderProps) {
           ) : (
             <>
               <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Iniciar Sesion</Link>
+                <Link href="/login">{t('login')}</Link>
               </Button>
               <Button size="sm" asChild>
-                <Link href="/register">Registrarse</Link>
+                <Link href="/register">{t('register')}</Link>
               </Button>
             </>
           )}
@@ -152,30 +164,41 @@ export function Header({ initialUser }: HeaderProps) {
         {/* Mobile Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" aria-label="Abrir menu">
+            <Button variant="ghost" size="icon" aria-label={t('openMenu')}>
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-80">
+          <SheetContent side="right" className="w-80" title={t('menu')} description={t('navigationPanel')} closeLabel={t('close')}>
             <div className="flex flex-col gap-4 mt-8">
               {/* Mobile Search */}
               <SearchForm onSubmit={() => setMobileMenuOpen(false)} />
 
               <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => {
+                    router.replace(pathname, { locale: locale === 'es' ? 'en' : 'es' })
+                    setMobileMenuOpen(false)
+                  }}
+                >
+                  {locale === 'es' ? 'EN' : 'ES'}
+                </Button>
                 <Link
                   href="/"
                   className="flex items-center gap-2 p-2 rounded-md hover:bg-accent"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <ChefHat className="h-5 w-5" />
-                  Inicio
+                  {t('home')}
                 </Link>
                 <Link
                   href="/categories"
                   className="flex items-center gap-2 p-2 rounded-md hover:bg-accent"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Categorias
+                  {t('categories')}
                 </Link>
 
                 {user ? (
@@ -186,7 +209,7 @@ export function Header({ initialUser }: HeaderProps) {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Plus className="h-5 w-5" />
-                      Nueva Receta
+                      {t('newRecipe')}
                     </Link>
                     <Link
                       href="/my-recipes"
@@ -194,7 +217,7 @@ export function Header({ initialUser }: HeaderProps) {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <BookOpen className="h-5 w-5" />
-                      Mis Recetas
+                      {t('myRecipes')}
                     </Link>
                     <Link
                       href="/bookmarks"
@@ -202,7 +225,7 @@ export function Header({ initialUser }: HeaderProps) {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Bookmark className="h-5 w-5" />
-                      Guardados
+                      {t('bookmarks')}
                     </Link>
                     <Link
                       href="/profile"
@@ -210,14 +233,14 @@ export function Header({ initialUser }: HeaderProps) {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <User className="h-5 w-5" />
-                      Mi Perfil
+                      {t('myProfile')}
                     </Link>
                     <button
                       onClick={() => setShowLogoutDialog(true)}
                       className="flex items-center gap-2 p-2 rounded-md hover:bg-accent text-left w-full"
                     >
                       <LogOut className="h-5 w-5" />
-                      Cerrar Sesion
+                      {t('logout')}
                     </button>
                   </>
                 ) : (
@@ -227,14 +250,14 @@ export function Header({ initialUser }: HeaderProps) {
                       className="flex items-center gap-2 p-2 rounded-md hover:bg-accent"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Iniciar Sesion
+                      {t('login')}
                     </Link>
                     <Link
                       href="/register"
                       className="flex items-center gap-2 p-2 rounded-md hover:bg-accent"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Registrarse
+                      {t('register')}
                     </Link>
                   </>
                 )}
@@ -247,15 +270,15 @@ export function Header({ initialUser }: HeaderProps) {
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cerrar sesion</AlertDialogTitle>
+            <AlertDialogTitle>{t('logoutConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Estas seguro de que deseas cerrar sesion?
+              {t('logoutConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmLogout}>
-              Cerrar sesion
+              {t('logoutConfirmTitle')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

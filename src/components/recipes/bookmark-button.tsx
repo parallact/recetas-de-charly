@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSession } from 'next-auth/react'
 import { isRecipeBookmarked, toggleBookmark } from '@/lib/actions/bookmarks'
+import { useTranslations } from 'next-intl'
 
 interface BookmarkButtonProps {
   recipeId: string
@@ -26,6 +27,8 @@ export function BookmarkButton({
   const [isLoading, setIsLoading] = useState(false)
   const [isChecking, setIsChecking] = useState(true)
   const isMounted = useRef(true)
+  const t = useTranslations('bookmarks')
+  const ta = useTranslations('auth')
 
   useEffect(() => {
     isMounted.current = true
@@ -53,7 +56,7 @@ export function BookmarkButton({
 
   const handleToggleBookmark = async () => {
     if (!session?.user) {
-      toast.error('Debes iniciar sesion para guardar recetas')
+      toast.error(ta('loginToBookmark'))
       return
     }
 
@@ -70,17 +73,17 @@ export function BookmarkButton({
       const result = await toggleBookmark(recipeId)
 
       if (!result.success) {
-        throw new Error(result.error || 'Error al guardar')
+        throw new Error(result.error || t('bookmarkError'))
       }
 
       if (isMounted.current) {
-        toast.success(result.isBookmarked ? 'Receta guardada' : 'Receta eliminada de guardados')
+        toast.success(result.isBookmarked ? t('bookmarkSaved') : t('bookmarkRemoved'))
       }
     } catch {
       // Revert optimistic update on error
       if (isMounted.current) {
         setIsBookmarked(previousState)
-        toast.error('Error al actualizar guardados')
+        toast.error(t('updateError'))
       }
     } finally {
       if (isMounted.current) setIsLoading(false)
@@ -99,7 +102,7 @@ export function BookmarkButton({
           isBookmarked && 'text-primary',
           className
         )}
-        title={isBookmarked ? 'Quitar de guardados' : 'Guardar receta'}
+        title={isBookmarked ? t('removeTitle') : t('saveTitle')}
       >
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -126,7 +129,7 @@ export function BookmarkButton({
           className={cn('h-4 w-4 mr-2', isBookmarked && 'fill-current')}
         />
       )}
-      {isBookmarked ? 'Guardada' : 'Guardar'}
+      {isBookmarked ? t('bookmarked') : t('bookmark')}
     </Button>
   )
 }

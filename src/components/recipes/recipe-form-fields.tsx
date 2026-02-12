@@ -22,6 +22,7 @@ import { INGREDIENT_UNITS } from '@/lib/constants'
 import { getAllCategories } from '@/lib/actions/categories'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import type { Category } from '@/lib/types'
+import { useTranslations } from 'next-intl'
 
 interface RecipeFormFieldsProps {
   form: UseFormReturn<RecipeFormData>
@@ -39,6 +40,9 @@ export function RecipeFormFields({
   onTagsChange,
 }: RecipeFormFieldsProps) {
   const [categories, setCategories] = useState<Category[]>([])
+  const t = useTranslations('recipeForm')
+  const tc = useTranslations('common')
+  const td = useTranslations('difficulty')
 
   const {
     fields: ingredientFields,
@@ -70,16 +74,16 @@ export function RecipeFormFields({
     <div className="space-y-8">
       {/* Basic Info */}
       <div className="space-y-4">
-        <h3 className="font-medium">Informacion basica</h3>
+        <h3 className="font-medium">{t('basicInfo')}</h3>
 
         <FormField
           control={form.control}
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Titulo *</FormLabel>
+              <FormLabel>{t('title')}</FormLabel>
               <FormControl>
-                <Input placeholder="Ej: Pasta Carbonara" {...field} />
+                <Input placeholder={t('titlePlaceholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,10 +95,10 @@ export function RecipeFormFields({
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripcion</FormLabel>
+              <FormLabel>{t('description')}</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Una breve descripcion de tu receta..."
+                  placeholder={t('descriptionPlaceholder')}
                   rows={3}
                   {...field}
                 />
@@ -109,7 +113,7 @@ export function RecipeFormFields({
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Imagen</FormLabel>
+              <FormLabel>{t('image')}</FormLabel>
               <FormControl>
                 <ImageUpload
                   folder="recipes"
@@ -129,7 +133,7 @@ export function RecipeFormFields({
             name="prepTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prep (min)</FormLabel>
+                <FormLabel>{t('prepTime')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -148,7 +152,7 @@ export function RecipeFormFields({
             name="cookingTime"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Coccion (min)</FormLabel>
+                <FormLabel>{t('cookingTime')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -167,7 +171,7 @@ export function RecipeFormFields({
             name="servings"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Porciones</FormLabel>
+                <FormLabel>{t('servings')}</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -186,17 +190,17 @@ export function RecipeFormFields({
             name="difficulty"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Dificultad</FormLabel>
+                <FormLabel>{t('difficulty')}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder={t('selectDifficulty')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="easy">Facil</SelectItem>
-                    <SelectItem value="medium">Media</SelectItem>
-                    <SelectItem value="hard">Dificil</SelectItem>
+                    <SelectItem value="easy">{td('easy')}</SelectItem>
+                    <SelectItem value="medium">{td('medium')}</SelectItem>
+                    <SelectItem value="hard">{td('hard')}</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -210,7 +214,7 @@ export function RecipeFormFields({
 
       {/* Categories */}
       <div className="space-y-4">
-        <h3 className="font-medium">Categorias</h3>
+        <h3 className="font-medium">{t('categories')}</h3>
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
             <Badge
@@ -230,7 +234,7 @@ export function RecipeFormFields({
         <>
           <Separator />
           <div className="space-y-4">
-            <h3 className="font-medium">Tags</h3>
+            <h3 className="font-medium">{t('tags')}</h3>
             <TagSelector
               selectedTags={selectedTags}
               onTagsChange={onTagsChange}
@@ -245,7 +249,7 @@ export function RecipeFormFields({
       {/* Ingredients */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium">Ingredientes *</h3>
+          <h3 className="font-medium">{t('ingredientsTitle')}</h3>
           <Button
             type="button"
             variant="outline"
@@ -253,7 +257,7 @@ export function RecipeFormFields({
             onClick={() => appendIngredient({ name: '', quantity: '', unit: '', customUnit: '' })}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Agregar
+            {tc('add')}
           </Button>
         </div>
 
@@ -271,7 +275,7 @@ export function RecipeFormFields({
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Input placeholder={`Ingrediente ${index + 1}`} {...field} />
+                          <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -283,7 +287,7 @@ export function RecipeFormFields({
                     size="icon"
                     onClick={() => removeIngredient(index)}
                     disabled={ingredientFields.length === 1}
-                    aria-label="Eliminar ingrediente"
+                    aria-label={t('removeIngredient')}
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
@@ -297,7 +301,7 @@ export function RecipeFormFields({
                     render={({ field }) => (
                       <FormItem className="w-20">
                         <FormControl>
-                          <Input placeholder="Cant." {...field} />
+                          <Input placeholder={t('quantity')} {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -310,7 +314,7 @@ export function RecipeFormFields({
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Unidad" />
+                              <SelectValue placeholder={t('unit')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -331,7 +335,7 @@ export function RecipeFormFields({
                       render={({ field }) => (
                         <FormItem className="w-24">
                           <FormControl>
-                            <Input placeholder="Unidad" {...field} />
+                            <Input placeholder={t('unit')} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -349,7 +353,7 @@ export function RecipeFormFields({
                     render={({ field }) => (
                       <FormItem className="w-20">
                         <FormControl>
-                          <Input placeholder="Cant." {...field} />
+                          <Input placeholder={t('quantity')} {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -363,7 +367,7 @@ export function RecipeFormFields({
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Unidad" />
+                              <SelectValue placeholder={t('unit')} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -385,7 +389,7 @@ export function RecipeFormFields({
                       render={({ field }) => (
                         <FormItem className="w-24">
                           <FormControl>
-                            <Input placeholder="Unidad" {...field} />
+                            <Input placeholder={t('unit')} {...field} />
                           </FormControl>
                         </FormItem>
                       )}
@@ -398,7 +402,7 @@ export function RecipeFormFields({
                     render={({ field }) => (
                       <FormItem className="flex-1">
                         <FormControl>
-                          <Input placeholder={`Ingrediente ${index + 1}`} {...field} />
+                          <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -412,7 +416,7 @@ export function RecipeFormFields({
                     onClick={() => removeIngredient(index)}
                     disabled={ingredientFields.length === 1}
                     className="mt-0.5"
-                    aria-label="Eliminar ingrediente"
+                    aria-label={t('removeIngredient')}
                   >
                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
@@ -431,7 +435,7 @@ export function RecipeFormFields({
       {/* Instructions */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-medium">Instrucciones *</h3>
+          <h3 className="font-medium">{t('instructionsTitle')}</h3>
           <Button
             type="button"
             variant="outline"
@@ -439,7 +443,7 @@ export function RecipeFormFields({
             onClick={() => appendInstruction({ content: '' })}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Agregar paso
+            {t('addStep')}
           </Button>
         </div>
 
@@ -457,7 +461,7 @@ export function RecipeFormFields({
                   <FormItem className="flex-1">
                     <FormControl>
                       <Textarea
-                        placeholder={`Describe el paso ${index + 1}...`}
+                        placeholder={t('stepPlaceholder', { index: index + 1 })}
                         rows={2}
                         {...field}
                       />
@@ -474,7 +478,7 @@ export function RecipeFormFields({
                 onClick={() => removeInstruction(index)}
                 disabled={instructionFields.length === 1}
                 className="mt-1"
-                aria-label="Eliminar paso"
+                aria-label={t('removeStep')}
               >
                 <Trash2 className="h-4 w-4 text-muted-foreground" />
               </Button>

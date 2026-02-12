@@ -6,6 +6,7 @@ import { Heart, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { getLikeStatus, toggleLike } from '@/lib/actions/likes'
+import { useTranslations } from 'next-intl'
 
 interface LikeButtonProps {
   recipeId: string
@@ -30,6 +31,8 @@ export function LikeButton({
   const [isChecking, setIsChecking] = useState(true)
   const [userId, setUserId] = useState<string | null>(null)
   const isMounted = useRef(true)
+  const t = useTranslations('likes')
+  const ta = useTranslations('auth')
 
   useEffect(() => {
     isMounted.current = true
@@ -53,7 +56,7 @@ export function LikeButton({
 
   const handleToggleLike = async () => {
     if (!userId) {
-      toast.error('Debes iniciar sesion para dar like')
+      toast.error(ta('loginToLike'))
       return
     }
 
@@ -71,14 +74,14 @@ export function LikeButton({
       const result = await toggleLike(recipeId)
 
       if (!result.success) {
-        throw new Error(result.error || 'Error al actualizar like')
+        throw new Error(result.error || t('updateError'))
       }
     } catch {
       // Revert optimistic update on error
       if (isMounted.current) {
         setIsLiked(previousState)
         setLikeCount(previousCount)
-        toast.error('Error al actualizar like')
+        toast.error(t('updateError'))
       }
     } finally {
       if (isMounted.current) setIsLoading(false)
@@ -104,7 +107,7 @@ export function LikeButton({
           isLiked && 'text-red-500',
           className
         )}
-        title={isLiked ? 'Quitar like' : 'Dar like'}
+        title={isLiked ? t('likeRemove') : t('likeAdd')}
       >
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin" />
@@ -127,7 +130,7 @@ export function LikeButton({
           isLiked && 'text-red-500',
           className
         )}
-        title={isLiked ? 'Quitar like' : 'Dar like'}
+        title={isLiked ? t('likeRemove') : t('likeAdd')}
       >
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -158,7 +161,7 @@ export function LikeButton({
           className={cn('h-4 w-4 mr-2', isLiked && 'fill-current')}
         />
       )}
-      {showCount ? formatCount(likeCount) : (isLiked ? 'Te gusta' : 'Me gusta')}
+      {showCount ? formatCount(likeCount) : (isLiked ? t('liked') : t('like'))}
     </Button>
   )
 }

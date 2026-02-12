@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChefHat, Check, RotateCcw, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 interface CookingModeProps {
   instructions: string[]
@@ -13,6 +14,8 @@ export function CookingMode({ instructions }: CookingModeProps) {
   const [isActive, setIsActive] = useState(false)
   const [completed, setCompleted] = useState<Set<number>>(new Set())
   const containerRef = useRef<HTMLDivElement>(null)
+  const t = useTranslations('recipes')
+  const tc = useTranslations('common')
 
   // Auto-scroll to cooking mode when activated
   useEffect(() => {
@@ -49,7 +52,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
         className="w-full"
       >
         <ChefHat className="h-4 w-4 mr-2" />
-        Activar modo cocina
+        {t('cookingMode')}
       </Button>
     )
   }
@@ -62,7 +65,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
       <div className="flex items-center justify-between mb-4 landscape:mb-2">
         <div className="flex items-center gap-2">
           <ChefHat className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Modo Cocina</h3>
+          <h3 className="font-semibold">{t('cookingModeTitle')}</h3>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -70,7 +73,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
             size="sm"
             onClick={resetProgress}
             disabled={completed.size === 0}
-            title="Reiniciar progreso"
+            title={t('resetProgress')}
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -80,7 +83,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
             onClick={() => setIsActive(false)}
           >
             <X className="h-4 w-4 mr-1" />
-            Cerrar
+            {tc('close')}
           </Button>
         </div>
       </div>
@@ -88,7 +91,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
       {/* Progress bar */}
       <div className="mb-4 landscape:mb-2">
         <div className="flex items-center justify-between text-sm mb-1">
-          <span className="text-muted-foreground">Progreso</span>
+          <span className="text-muted-foreground">{t('progress')}</span>
           <span className="font-medium">{completed.size}/{instructions.length}</span>
         </div>
         <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -142,7 +145,7 @@ export function CookingMode({ instructions }: CookingModeProps) {
       {completed.size === instructions.length && instructions.length > 0 && (
         <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg text-center">
           <p className="text-green-700 dark:text-green-300 font-medium">
-            Receta completada!
+            {t('recipeCompleted')}
           </p>
         </div>
       )}
