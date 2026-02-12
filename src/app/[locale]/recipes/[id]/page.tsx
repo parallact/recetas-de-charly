@@ -18,7 +18,7 @@ import { CookingMode } from '@/components/recipes/cooking-mode'
 import { RecipeNotes } from '@/components/recipes/recipe-notes'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth/get-user'
-import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants'
+import { DIFFICULTY_COLORS } from '@/lib/constants'
 import { getTranslations } from 'next-intl/server'
 import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
@@ -48,7 +48,7 @@ interface FormattedRecipe {
     name: string
   }[]
   instructions: string[]
-  categories: string[]
+  categories: { name: string; slug: string }[]
   tags: TagInfo[]
 }
 
@@ -103,8 +103,9 @@ async function getRecipeById(id: string, userId?: string): Promise<FormattedReci
 
     // Format categories
     const categories = recipe.recipe_categories
-      .map((rc) => rc.categories?.name || '')
-      .filter(Boolean)
+      .map((rc) => rc.categories)
+      .filter((cat): cat is NonNullable<typeof cat> => cat !== null)
+      .map(cat => ({ name: cat.name, slug: cat.slug }))
 
     // Format tags
     const tags = recipe.recipe_tags
@@ -147,10 +148,12 @@ export default async function RecipeDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [user, t, tc] = await Promise.all([
+  const [user, t, tc, tcat, td] = await Promise.all([
     getUser(),
     getTranslations('recipes'),
-    getTranslations('common')
+    getTranslations('common'),
+    getTranslations('categoryNames'),
+    getTranslations('difficulty')
   ])
   const recipe = await getRecipeById(id, user?.id)
 
@@ -211,7 +214,7 @@ export default async function RecipeDetailPage({
                   className={DIFFICULTY_COLORS[difficulty]}
                   variant="secondary"
                 >
-                  {DIFFICULTY_LABELS[difficulty]}
+                  {td(difficulty)}
                 </Badge>
               )}
               {recipe.cooking_time && (
@@ -333,8 +336,8 @@ export default async function RecipeDetailPage({
                   <h3 className="font-medium mb-3">{tc('categories')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {recipe.categories.map((category) => (
-                      <Badge key={category} variant="secondary">
-                        {category}
+                      <Badge key={category.slug} variant="secondary">
+                        {tcat.has(category.slug) ? tcat(category.slug) : category.name}
                       </Badge>
                     ))}
                   </div>

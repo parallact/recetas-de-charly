@@ -7,7 +7,7 @@ import { StickyNote, Plus, Pencil, Trash2, Loader2, Lock, Globe } from 'lucide-r
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { getRecipeNotes, addRecipeNote, updateRecipeNote, deleteRecipeNote } from '@/lib/actions/notes'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 
 interface RecipeNote {
   id: string
@@ -31,6 +31,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
+  const locale = useLocale()
   const t = useTranslations('notes')
   const tc = useTranslations('common')
   const te = useTranslations('serverErrors')
@@ -246,7 +247,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                             <Globe className="h-3 w-3" />
                           )}
                           <span>
-                            {new Date(note.created_at).toLocaleDateString('es')}
+                            {new Date(note.created_at).toLocaleDateString(locale)}
                           </span>
                         </div>
                         <div className="flex gap-1">

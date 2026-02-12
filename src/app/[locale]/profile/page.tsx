@@ -33,7 +33,7 @@ import { ChefHat, Pencil, Bookmark, Heart, Calendar, Loader2, User } from 'lucid
 import { cn } from '@/lib/utils/cn'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { getUserProfile, updateUserProfile, getUserStats } from '@/lib/actions/profile'
 
@@ -84,6 +84,7 @@ interface Stats {
 export default function ProfilePage() {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const locale = useLocale()
   const t = useTranslations('profile')
   const tc = useTranslations('common')
   const ta = useTranslations('auth')
@@ -213,7 +214,7 @@ export default function ProfilePage() {
     )
   }
 
-  const memberSince = new Date(profile.created_at).toLocaleDateString('es', {
+  const memberSince = new Date(profile.created_at).toLocaleDateString(locale, {
     month: 'long',
     year: 'numeric',
   })

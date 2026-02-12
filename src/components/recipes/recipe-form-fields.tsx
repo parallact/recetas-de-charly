@@ -41,6 +41,7 @@ export function RecipeFormFields({
   const [categories, setCategories] = useState<Category[]>([])
   const t = useTranslations('recipeForm')
   const td = useTranslations('difficulty')
+  const tcat = useTranslations('categoryNames')
 
   useEffect(() => {
     async function loadCategories() {
@@ -203,7 +204,7 @@ export function RecipeFormFields({
               className="cursor-pointer"
               onClick={() => onToggleCategory(category.id)}
             >
-              {category.icon} {category.name}
+              {category.icon} {tcat.has(category.slug) ? tcat(category.slug) : category.name}
             </Badge>
           ))}
         </div>

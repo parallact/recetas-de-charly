@@ -67,13 +67,14 @@ async function getCategoryCounts(): Promise<Record<string, number>> {
 }
 
 export default async function HomePage() {
-  const [categories, featuredRecipes, categoryCounts, user, t, tc] = await Promise.all([
+  const [categories, featuredRecipes, categoryCounts, user, t, tc, tcat] = await Promise.all([
     getCategories(),
     getFeaturedRecipes(),
     getCategoryCounts(),
     getUser(),
     getTranslations('home'),
-    getTranslations('common')
+    getTranslations('common'),
+    getTranslations('categoryNames')
   ])
 
   return (
@@ -198,7 +199,7 @@ export default async function HomePage() {
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4 text-center">
                       <span className="text-4xl mb-2 block">{category.icon || '🍴'}</span>
-                      <h3 className="font-medium">{category.name}</h3>
+                      <h3 className="font-medium">{tcat.has(category.slug) ? tcat(category.slug) : category.name}</h3>
                       <p className="text-sm text-muted-foreground">
                         {categoryCounts[category.id] || 0} {tc('recipes').toLowerCase()}
                       </p>

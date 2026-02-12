@@ -33,10 +33,11 @@ async function getCategories() {
 }
 
 export default async function CategoriesPage() {
-  const [categories, t, tr] = await Promise.all([
+  const [categories, t, tr, tcat] = await Promise.all([
     getCategories(),
     getTranslations('categories'),
-    getTranslations('recipes')
+    getTranslations('recipes'),
+    getTranslations('categoryNames')
   ])
 
   return (
@@ -59,7 +60,7 @@ export default async function CategoriesPage() {
                   <CardContent className="p-6 text-center">
                     <span className="text-4xl mb-3 block">{category.icon || '🍽️'}</span>
                     <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                      {category.name}
+                      {tcat.has(category.slug) ? tcat(category.slug) : category.name}
                     </h3>
                     {category.description && (
                       <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

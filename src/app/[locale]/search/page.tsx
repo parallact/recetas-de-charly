@@ -184,6 +184,7 @@ export default async function SearchPage({
   const t = await getTranslations('search')
   const tc = await getTranslations('common')
   const td = await getTranslations('difficulty')
+  const tcat = await getTranslations('categoryNames')
 
   // Helper to build pagination URLs
   const buildPageUrl = (pageNum: number) => {
@@ -266,7 +267,7 @@ export default async function SearchPage({
               <SelectItem value="all">{tc('all')}</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.slug}>
-                  {cat.name}
+                  {tcat.has(cat.slug) ? tcat(cat.slug) : cat.name}
                 </SelectItem>
               ))}
             </SelectContent>

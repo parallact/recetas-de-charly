@@ -205,6 +205,18 @@
     "noCategoriesHint": "Las categorias apareceran aqui pronto",
     "viewAllRecipes": "Ver todas las recetas"
   },
+  "categoryNames": {
+    "desayunos": "Desayunos",
+    "almuerzos": "Almuerzos",
+    "cenas": "Cenas",
+    "postres": "Postres",
+    "sopas": "Sopas",
+    "ensaladas": "Ensaladas",
+    "bebidas": "Bebidas",
+    "snacks": "Snacks",
+    "panaderia": "Panaderia",
+    "mariscos": "Mariscos"
+  },
   "myRecipes": {
     "title": "Mis Recetas",
     "noRecipes": "No has creado recetas aun",

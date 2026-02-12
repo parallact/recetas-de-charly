@@ -104,11 +104,12 @@ export default async function RecipesPage({
   const categorySlug = params.category
   const page = Math.max(1, parseInt(params.page || '1') || 1)
 
-  const [result, categories, t, tc] = await Promise.all([
+  const [result, categories, t, tc, tcat] = await Promise.all([
     getRecipes(categorySlug, page),
     getCategories(),
     getTranslations('recipes'),
-    getTranslations('common')
+    getTranslations('common'),
+    getTranslations('categoryNames')
   ])
 
   const { recipes, totalCount, totalPages, currentPage } = result
@@ -122,11 +123,11 @@ export default async function RecipesPage({
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">
-            {currentCategory ? currentCategory.name : t('allRecipes')}
+            {currentCategory ? (tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name) : t('allRecipes')}
           </h1>
           <p className="text-muted-foreground mt-1">
             {currentCategory
-              ? `${t('recipesOf')} ${currentCategory.name.toLowerCase()}`
+              ? `${t('recipesOf')} ${(tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name).toLowerCase()}`
               : t('exploreCollection')}
           </p>
         </div>
@@ -154,7 +155,7 @@ export default async function RecipesPage({
               variant={categorySlug === category.slug ? 'default' : 'outline'}
               className="cursor-pointer hover:bg-primary/90"
             >
-              {category.icon} {category.name}
+              {category.icon} {tcat.has(category.slug) ? tcat(category.slug) : category.name}
             </Badge>
           </Link>
         ))}
@@ -166,7 +167,7 @@ export default async function RecipesPage({
           <h3 className="text-lg font-medium mb-2">{t('noRecipesYet')}</h3>
           <p className="text-muted-foreground mb-4">
             {currentCategory
-              ? `${t('noRecipesInCategory')} ${currentCategory.name}`
+              ? `${t('noRecipesInCategory')} ${tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name}`
               : t('beFirstToShare')}
           </p>
           <Button asChild>
