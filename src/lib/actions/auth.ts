@@ -2,7 +2,6 @@
 
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { signIn } from '@/auth'
 import { sanitizeEmail, getEmailError } from '@/lib/validators/email'
 import { getNameError } from '@/lib/validators/name'
 import { checkRateLimit } from '@/lib/rate-limit'
@@ -18,8 +17,7 @@ interface LoginResult {
 
 export async function loginUser(
   email: string,
-  password: string,
-  redirectTo: string
+  password: string
 ): Promise<LoginResult> {
   const cleanEmail = sanitizeEmail(email)
 
@@ -36,7 +34,7 @@ export async function loginUser(
     return { error: 'passwordRequired' }
   }
 
-  // Validate credentials before calling signIn to avoid AuthError handling issues
+  // Validate credentials server-side (rate-limited)
   const user = await prisma.users.findUnique({
     where: { email: cleanEmail },
   })
@@ -50,12 +48,7 @@ export async function loginUser(
     return { error: 'invalidCredentials' }
   }
 
-  // Credentials valid — signIn will redirect on success (throws NEXT_REDIRECT)
-  await signIn('credentials', {
-    email: cleanEmail,
-    password,
-    redirectTo,
-  })
+  // Credentials valid — client handles signIn via next-auth/react
   return {}
 }
 

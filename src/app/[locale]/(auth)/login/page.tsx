@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Link } from '@/i18n/navigation'
+import { Link, useRouter } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ import { sanitizeEmail, getEmailError } from '@/lib/validators/email'
 import { ScaleIn } from '@/components/ui/motion'
 
 export default function LoginPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const rawRedirect = searchParams.get('redirect') || '/'
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
@@ -39,10 +40,26 @@ export default function LoginPage() {
         return
       }
 
-      const result = await loginUser(cleanEmail, password, redirectTo)
+      // Server-side validation (rate-limited + credential check)
+      const result = await loginUser(cleanEmail, password)
 
       if (result?.error) {
         toast.error(te(result.error))
+        return
+      }
+
+      // Credentials valid — sign in on client side
+      const signInResult = await signIn('credentials', {
+        email: cleanEmail,
+        password,
+        redirect: false,
+      })
+
+      if (signInResult?.error) {
+        toast.error(te('invalidCredentials'))
+      } else {
+        router.push(redirectTo)
+        router.refresh()
       }
     } catch {
       toast.error(t('loginError'))

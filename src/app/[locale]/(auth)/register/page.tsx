@@ -71,20 +71,7 @@ export default function RegisterPage() {
       }
 
       toast.success(t('accountCreated'))
-
-      // Auto login after registration
-      const signInResult = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (signInResult?.error) {
-        router.push('/login')
-      } else {
-        router.push(redirectTo)
-        router.refresh()
-      }
+      router.push('/login')
     } catch {
       toast.error(t('registerError'))
     } finally {
