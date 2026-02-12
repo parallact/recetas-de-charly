@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Upload, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import { getUploadUrl } from '@/lib/actions/storage'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +45,7 @@ export function ImageUpload({
   rounded = false,
 }: ImageUploadProps) {
   const { data: session } = useSession()
+  const t = useTranslations('imageUpload')
   const [uploadState, setUploadState] = useState<UploadState>({
     isUploading: false,
     progress: 0,
@@ -83,18 +85,18 @@ export function ImageUpload({
   const handleFileSelect = useCallback(
     async (file: File) => {
       if (!session?.user) {
-        toast.error('Debes iniciar sesion para subir imagenes')
+        toast.error(t('loginRequired'))
         return
       }
 
       if (!file.type.startsWith('image/')) {
-        toast.error('Solo se permiten imagenes')
+        toast.error(t('onlyImages'))
         return
       }
 
       const maxSize = maxSizeMB * 1024 * 1024
       if (file.size > maxSize) {
-        toast.error(`La imagen no puede superar ${maxSizeMB}MB`)
+        toast.error(t('maxSize', { maxSizeMB }))
         return
       }
 
@@ -115,7 +117,7 @@ export function ImageUpload({
         const result = await getUploadUrl(file.name, file.type, folder)
 
         if (!result.success || !result.uploadUrl || !result.publicUrl) {
-          throw new Error(result.error || 'Error al obtener URL de subida')
+          throw new Error(result.error || t('uploadUrlError'))
         }
 
         // Upload directly to R2
@@ -129,11 +131,11 @@ export function ImageUpload({
             },
           })
         } catch {
-          throw new Error('No se pudo conectar al servidor de archivos. Verifica tu conexión a internet.')
+          throw new Error(t('networkError'))
         }
 
         if (!uploadResponse.ok) {
-          throw new Error(`Error al subir la imagen (${uploadResponse.status})`)
+          throw new Error(t('uploadError', { status: uploadResponse.status }))
         }
 
         // Complete progress
@@ -146,9 +148,9 @@ export function ImageUpload({
         await new Promise(resolve => setTimeout(resolve, 300))
 
         onChange(result.publicUrl)
-        toast.success('Imagen subida')
+        toast.success(t('uploadSuccess'))
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Error al subir la imagen'
+        const errorMessage = error instanceof Error ? error.message : t('genericError')
         toast.error(errorMessage)
         setUploadState(prev => ({ ...prev, status: 'error' }))
       } finally {
@@ -164,7 +166,7 @@ export function ImageUpload({
         })
       }
     },
-    [session, folder, maxSizeMB, onChange, simulateProgress]
+    [session, folder, maxSizeMB, onChange, simulateProgress, t]
   )
 
   const handleDrop = useCallback(
@@ -197,21 +199,21 @@ export function ImageUpload({
 
   const handleUrlSubmit = () => {
     if (!urlInput.trim()) {
-      toast.error('Ingresa una URL valida')
+      toast.error(t('invalidUrl'))
       return
     }
     try {
       const parsed = new URL(urlInput)
       if (parsed.protocol !== 'https:') {
-        toast.error('Solo se permiten URLs con HTTPS')
+        toast.error(t('httpsOnly'))
         return
       }
       onChange(urlInput.trim())
       setUrlInput('')
       setUseUrl(false)
-      toast.success('URL guardada')
+      toast.success(t('urlSaved'))
     } catch {
-      toast.error('URL no valida')
+      toast.error(t('urlInvalid'))
     }
   }
 
@@ -240,7 +242,7 @@ export function ImageUpload({
               onClick={() => fileInputRef.current?.click()}
               className="mr-2"
             >
-              Cambiar
+              {t('change')}
             </Button>
           </div>
         </div>
@@ -255,7 +257,7 @@ export function ImageUpload({
             rounded ? '-top-1 -right-1' : '-top-2 -right-2'
           )}
           onClick={() => onChange(null)}
-          aria-label="Eliminar imagen"
+          aria-label={t('removeImage')}
         >
           <X className="h-4 w-4" />
         </Button>
@@ -277,14 +279,14 @@ export function ImageUpload({
         <div className="flex gap-2">
           <Input
             type="url"
-            placeholder="https://ejemplo.com/imagen.jpg"
+            placeholder={t('urlPlaceholder')}
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleUrlSubmit())}
             className="flex-1"
           />
           <Button type="button" onClick={handleUrlSubmit} size="sm">
-            Guardar
+            {t('save')}
           </Button>
         </div>
         <Button
@@ -295,7 +297,7 @@ export function ImageUpload({
           className="text-muted-foreground"
         >
           <Upload className="h-4 w-4 mr-1.5" />
-          Subir archivo
+          {t('uploadFile')}
         </Button>
       </div>
     )
@@ -344,7 +346,7 @@ export function ImageUpload({
                 isDragging ? 'text-primary' : 'text-muted-foreground/50'
               )} />
               <span className="text-[11px] text-muted-foreground/60 font-medium">
-                {isDragging ? 'Soltar' : 'Subir'}
+                {isDragging ? t('drop') : t('upload')}
               </span>
             </div>
           )}
@@ -419,7 +421,7 @@ export function ImageUpload({
                   />
                 </div>
                 <p className="text-xs text-center text-muted-foreground">
-                  {uploadState.status === 'success' ? 'Completado' : `${Math.round(uploadState.progress)}%`}
+                  {uploadState.status === 'success' ? t('completed') : `${Math.round(uploadState.progress)}%`}
                 </p>
               </div>
             </div>
@@ -437,14 +439,14 @@ export function ImageUpload({
               </div>
               <div className="text-center">
                 <p className="text-sm font-medium text-foreground">
-                  {isDragging ? 'Suelta para subir' : 'Arrastra una imagen'}
+                  {isDragging ? t('dropToUpload') : t('dragImage')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  o haz clic para seleccionar
+                  {t('clickToSelect')}
                 </p>
               </div>
               <p className="text-xs text-muted-foreground/70 mt-1">
-                PNG, JPG, WEBP (max {maxSizeMB}MB)
+                {t('formats', { maxSizeMB })}
               </p>
             </>
           )}
@@ -458,7 +460,7 @@ export function ImageUpload({
         className="w-full text-muted-foreground hover:text-foreground"
       >
         <LinkIcon className="h-4 w-4 mr-1.5" />
-        Usar URL externa
+        {t('useExternalUrl')}
       </Button>
     </div>
   )
