@@ -26,7 +26,7 @@ export async function getAllTags() {
 export async function createTag(name: string, slug: string) {
   const { user, error } = await requireAuth()
   if (!user) {
-    return { success: false, error: error || 'No autenticado', data: null }
+    return { success: false, error: error || 'notAuthenticated', data: null }
   }
 
   try {
@@ -45,7 +45,7 @@ export async function createTag(name: string, slug: string) {
     return { success: true, data: tag }
   } catch (error) {
     if (isPrismaError(error) && error.code === 'P2002') {
-      return { success: false, error: 'Este tag ya existe', data: null }
+      return { success: false, error: 'duplicateTag', data: null }
     }
     return { success: false, error: handleActionError(error, 'createTag'), data: null }
   }

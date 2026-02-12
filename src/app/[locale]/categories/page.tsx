@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { prisma } from '@/lib/prisma'
 import { getTranslations } from 'next-intl/server'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
 async function getCategories() {
   try {
@@ -40,36 +41,40 @@ export default async function CategoriesPage() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
-        <p className="text-muted-foreground">
-          {t('subtitle')}
-        </p>
-      </div>
+      <FadeIn>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-muted-foreground">
+            {t('subtitle')}
+          </p>
+        </div>
+      </FadeIn>
 
       {categories.length > 0 ? (
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <StaggerContainer staggerDelay={0.06} className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((category) => (
-            <Link key={category.id} href={`/recipes?category=${category.slug}`}>
-              <Card className="group hover:shadow-lg transition-shadow h-full">
-                <CardContent className="p-6 text-center">
-                  <span className="text-4xl mb-3 block">{category.icon || '🍽️'}</span>
-                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                    {category.name}
-                  </h3>
-                  {category.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {category.description}
+            <StaggerItem key={category.id}>
+              <Link href={`/recipes?category=${category.slug}`}>
+                <Card className="group hover:shadow-lg transition-shadow h-full">
+                  <CardContent className="p-6 text-center">
+                    <span className="text-4xl mb-3 block">{category.icon || '🍽️'}</span>
+                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                        {category.description}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {category.recipeCount} {category.recipeCount === 1 ? tr('recipe') : tr('recipePlural')}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {category.recipeCount} {category.recipeCount === 1 ? tr('recipe') : tr('recipePlural')}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
+                  </CardContent>
+                </Card>
+              </Link>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       ) : (
         <div className="text-center py-12">
           <p className="text-4xl mb-4">📂</p>

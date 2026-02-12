@@ -33,6 +33,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   const [editContent, setEditContent] = useState('')
   const t = useTranslations('notes')
   const tc = useTranslations('common')
+  const te = useTranslations('serverErrors')
 
   useEffect(() => {
     let isMounted = true
@@ -65,7 +66,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await addRecipeNote(recipeId, newNote.trim(), isPrivate)
 
     if (!result.success) {
-      toast.error(result.error || t('saveError'))
+      toast.error(result.error ? te(result.error) : t('saveError'))
     } else if (result.data) {
       setNotes(prev => [result.data!, ...prev])
       setNewNote('')
@@ -84,7 +85,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await updateRecipeNote(noteId, editContent.trim())
 
     if (!result.success) {
-      toast.error(result.error || t('updateError'))
+      toast.error(result.error ? te(result.error) : t('updateError'))
     } else {
       setNotes(prev =>
         prev.map(n =>
@@ -102,7 +103,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
     const result = await deleteRecipeNote(noteId)
 
     if (!result.success) {
-      toast.error(result.error || t('deleteError'))
+      toast.error(result.error ? te(result.error) : t('deleteError'))
     } else {
       setNotes(prev => prev.filter(n => n.id !== noteId))
       toast.success(t('noteDeleted'))

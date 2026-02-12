@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { useForm } from 'react-hook-form'
@@ -39,26 +39,28 @@ import { getUserProfile, updateUserProfile, getUserStats } from '@/lib/actions/p
 // Zod schema for profile validation
 const NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/
 
-const profileSchema = z.object({
-  display_name: z
-    .string()
-    .transform(val => val.trim())
-    .pipe(
-      z.string()
-        .min(2, 'El nombre debe tener al menos 2 caracteres')
-        .max(50, 'El nombre no puede exceder 50 caracteres')
-        .regex(NAME_REGEX, 'El nombre solo puede contener letras, espacios, guiones y apostrofes')
-    )
-    .or(z.literal('')),
-  avatar_url: z.union([z.string().url(), z.literal(''), z.null()]),
-  bio: z
-    .string()
-    .max(300, 'La bio no puede exceder 300 caracteres')
-    .refine(val => !val || val.trim().length > 0, 'La bio no puede contener solo espacios')
-    .or(z.literal('')),
-})
+function createProfileSchema(te: (key: string) => string) {
+  return z.object({
+    display_name: z
+      .string()
+      .transform(val => val.trim())
+      .pipe(
+        z.string()
+          .min(2, te('nameTooShort'))
+          .max(50, te('nameTooLong'))
+          .regex(NAME_REGEX, te('nameInvalidChars'))
+      )
+      .or(z.literal('')),
+    avatar_url: z.union([z.string().url(), z.literal(''), z.null()]),
+    bio: z
+      .string()
+      .max(300, te('bioTooLong'))
+      .refine(val => !val || val.trim().length > 0, te('bioOnlySpaces'))
+      .or(z.literal('')),
+  })
+}
 
-type ProfileFormData = z.infer<typeof profileSchema>
+type ProfileFormData = z.infer<ReturnType<typeof createProfileSchema>>
 
 interface Profile {
   id: string
@@ -82,6 +84,8 @@ export default function ProfilePage() {
   const tc = useTranslations('common')
   const ta = useTranslations('auth')
   const tr = useTranslations('recipes')
+  const te = useTranslations('serverErrors')
+  const profileSchema = useMemo(() => createProfileSchema(te), [te])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [stats, setStats] = useState<Stats>({ recipes: 0, bookmarks: 0, likes: 0 })
   const [loading, setLoading] = useState(true)
@@ -115,7 +119,7 @@ export default function ProfilePage() {
       ])
 
       if (!profileResult.success || !profileResult.data) {
-        toast.error(profileResult.error || t('updateError'))
+        toast.error(profileResult.error ? te(profileResult.error) : t('updateError'))
         setLoading(false)
         return
       }
@@ -147,7 +151,7 @@ export default function ProfilePage() {
     })
 
     if (!result.success) {
-      toast.error(result.error || t('updateError'))
+      toast.error(result.error ? te(result.error) : t('updateError'))
     } else {
       toast.success(t('profileUpdated'))
       setProfile({

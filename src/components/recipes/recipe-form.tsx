@@ -50,6 +50,7 @@ export function RecipeForm({
   const { data: session, status } = useSession()
   const t = useTranslations('recipeForm')
   const tc = useTranslations('common')
+  const te = useTranslations('serverErrors')
 
   const [loading, setLoading] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories)
@@ -178,7 +179,7 @@ export function RecipeForm({
         const result = await createRecipe(formInput)
 
         if (!result.success) {
-          toast.error(result.error || t('createError'))
+          toast.error(result.error ? te(result.error) : t('createError'))
           return
         }
 
@@ -193,7 +194,7 @@ export function RecipeForm({
         const result = await updateRecipe(recipeId, formInput)
 
         if (!result.success) {
-          toast.error(result.error || t('updateError'))
+          toast.error(result.error ? te(result.error) : t('updateError'))
           return
         }
 

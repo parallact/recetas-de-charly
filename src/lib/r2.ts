@@ -5,7 +5,9 @@ let r2Client: S3Client | null = null
 
 export function getR2Client(): S3Client | null {
   if (!process.env.R2_ACCOUNT_ID || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
-    console.warn('[R2] Missing environment variables')
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[R2] Missing environment variables')
+    }
     return null
   }
 

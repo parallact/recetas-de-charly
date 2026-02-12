@@ -8,13 +8,13 @@ export function isValidEmail(email: string): boolean {
 
 export function getEmailError(email: string): string | null {
   const trimmed = email.trim()
-  if (!trimmed) return 'El email es requerido'
-  if (trimmed.length > 255) return 'El email no puede tener mas de 255 caracteres'
+  if (!trimmed) return 'emailRequired'
+  if (trimmed.length > 255) return 'emailTooLong'
   const parts = trimmed.split('@')
-  if (parts.length !== 2 || !parts[0] || !parts[1]) return 'El email no es valido'
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return 'invalidEmail'
   const domain = parts[1]
-  if (domain.length > 63) return 'El dominio del email es demasiado largo (max 63 caracteres)'
-  if (!EMAIL_REGEX.test(trimmed)) return 'El email no es valido'
+  if (domain.length > 63) return 'emailDomainTooLong'
+  if (!EMAIL_REGEX.test(trimmed)) return 'invalidEmail'
   return null
 }
 

@@ -43,7 +43,7 @@ export async function createRecipe(input: RecipeFormInput) {
 
   const parsed = recipeInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: 'Datos de receta invalidos', recipeId: null }
+    return { success: false, error: 'invalidRecipeData', recipeId: null }
   }
 
   const data = parsed.data
@@ -128,7 +128,7 @@ export async function createRecipe(input: RecipeFormInput) {
     return { success: true, recipeId }
   } catch (err) {
     if (isPrismaError(err) && err.code === 'P2002') {
-      return { success: false, error: 'Ya tienes una receta con ese nombre', recipeId: null }
+      return { success: false, error: 'duplicateRecipeName', recipeId: null }
     }
     return { success: false, error: handleActionError(err, 'createRecipe'), recipeId: null }
   }
@@ -143,7 +143,7 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
 
   const parsed = recipeInputSchema.safeParse(input)
   if (!parsed.success) {
-    return { success: false, error: 'Datos de receta invalidos' }
+    return { success: false, error: 'invalidRecipeData' }
   }
 
   const data = parsed.data
@@ -156,7 +156,7 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
     })
 
     if (!existingRecipe || existingRecipe.user_id !== user.id) {
-      return { success: false, error: 'No tienes permiso para editar esta receta' }
+      return { success: false, error: 'noEditPermission' }
     }
 
     await prisma.$transaction(async (tx) => {
@@ -243,7 +243,7 @@ export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
     return { success: true }
   } catch (err) {
     if (isPrismaError(err) && err.code === 'P2002') {
-      return { success: false, error: 'Ya tienes una receta con ese nombre' }
+      return { success: false, error: 'duplicateRecipeName' }
     }
     return { success: false, error: handleActionError(err, 'updateRecipe') }
   }

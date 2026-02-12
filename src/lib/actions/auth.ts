@@ -24,7 +24,7 @@ export async function loginUser(
   const cleanEmail = sanitizeEmail(email)
 
   if (!checkRateLimit(`login:${cleanEmail}`, 5, 15 * 60 * 1000)) {
-    return { error: 'Demasiados intentos. Intenta de nuevo en 15 minutos.' }
+    return { error: 'loginRateLimit' }
   }
 
   const emailError = getEmailError(cleanEmail)
@@ -33,7 +33,7 @@ export async function loginUser(
   }
 
   if (!password) {
-    return { error: 'La contraseña es requerida' }
+    return { error: 'passwordRequired' }
   }
 
   // Validate credentials before calling signIn to avoid AuthError handling issues
@@ -42,12 +42,12 @@ export async function loginUser(
   })
 
   if (!user || !user.password) {
-    return { error: 'Email o contraseña incorrectos' }
+    return { error: 'invalidCredentials' }
   }
 
   const isValidPassword = await bcrypt.compare(password, user.password)
   if (!isValidPassword) {
-    return { error: 'Email o contraseña incorrectos' }
+    return { error: 'invalidCredentials' }
   }
 
   // Credentials valid — signIn will redirect on success (throws NEXT_REDIRECT)
@@ -67,12 +67,12 @@ export async function registerUser(
   try {
     // Validate input
     if (!name || !email || !password) {
-      return { success: false, error: 'Todos los campos son requeridos' }
+      return { success: false, error: 'allFieldsRequired' }
     }
 
     const cleanEmailForLimit = sanitizeEmail(email)
     if (!checkRateLimit(`register:${cleanEmailForLimit}`, 3, 60 * 60 * 1000)) {
-      return { success: false, error: 'Demasiados intentos de registro. Intenta de nuevo en 1 hora.' }
+      return { success: false, error: 'registerRateLimit' }
     }
 
     // Name validation
@@ -82,7 +82,7 @@ export async function registerUser(
     }
 
     if (password.length > 128) {
-      return { success: false, error: 'La contraseña no puede tener más de 128 caracteres' }
+      return { success: false, error: 'passwordTooLong' }
     }
 
     // Email validation
@@ -93,11 +93,11 @@ export async function registerUser(
     }
 
     if (!password.trim()) {
-      return { success: false, error: 'La contraseña no puede contener solo espacios' }
+      return { success: false, error: 'passwordOnlySpaces' }
     }
 
     if (password.length < 6) {
-      return { success: false, error: 'La contraseña debe tener al menos 6 caracteres' }
+      return { success: false, error: 'passwordTooShort' }
     }
 
     // Check if user already exists
@@ -106,7 +106,7 @@ export async function registerUser(
     })
 
     if (existingUser) {
-      return { success: false, error: 'Este email ya esta registrado' }
+      return { success: false, error: 'emailTaken' }
     }
 
     // Hash password
@@ -131,6 +131,6 @@ export async function registerUser(
 
     return { success: true }
   } catch {
-    return { success: false, error: 'Error al crear la cuenta' }
+    return { success: false, error: 'accountCreationError' }
   }
 }

@@ -20,6 +20,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth/get-user'
 import { DIFFICULTY_COLORS, DIFFICULTY_LABELS } from '@/lib/constants'
 import { getTranslations } from 'next-intl/server'
+import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
 interface TagInfo {
   name: string
@@ -237,9 +238,9 @@ export default async function RecipeDetailPage({
           <div className="lg:col-span-2 space-y-8">
             {/* Description */}
             {recipe.description && (
-              <div>
+              <FadeIn>
                 <p className="text-lg text-muted-foreground">{recipe.description}</p>
-              </div>
+              </FadeIn>
             )}
 
             {/* Author */}
@@ -285,16 +286,18 @@ export default async function RecipeDetailPage({
                 </div>
 
                 {/* Static instructions list */}
-                <ol className="space-y-6">
+                <StaggerContainer staggerDelay={0.1} className="space-y-6">
                   {recipe.instructions.map((step, index) => (
-                    <li key={index} className="flex gap-4">
-                      <div className="shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                        {index + 1}
-                      </div>
-                      <p className="pt-1">{step}</p>
-                    </li>
+                    <StaggerItem key={index}>
+                      <li className="flex gap-4">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                          {index + 1}
+                        </div>
+                        <p className="pt-1">{step}</p>
+                      </li>
+                    </StaggerItem>
                   ))}
-                </ol>
+                </StaggerContainer>
               </div>
             )}
 
@@ -318,6 +321,7 @@ export default async function RecipeDetailPage({
 
           {/* Sidebar - Ingredients */}
           <div className="lg:col-span-1">
+            <FadeIn direction="right" delay={0.2}>
             <div className="sticky top-24 space-y-4">
               <ServingsScaler
                 originalServings={recipe.servings || 1}
@@ -356,6 +360,7 @@ export default async function RecipeDetailPage({
                 </div>
               )}
             </div>
+            </FadeIn>
           </div>
         </div>
       </div>

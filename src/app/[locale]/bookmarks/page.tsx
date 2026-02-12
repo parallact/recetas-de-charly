@@ -48,6 +48,7 @@ export default function BookmarksPage() {
   const t = useTranslations('bookmarks')
   const tc = useTranslations('common')
   const ta = useTranslations('auth')
+  const te = useTranslations('serverErrors')
 
   useEffect(() => {
     async function loadBookmarks() {
@@ -62,7 +63,7 @@ export default function BookmarksPage() {
       const result = await getUserBookmarks()
 
       if (!result.success) {
-        toast.error(result.error || t('loadError'))
+        toast.error(result.error ? te(result.error) : t('loadError'))
       } else {
         setBookmarks(result.data)
       }
@@ -79,7 +80,7 @@ export default function BookmarksPage() {
     const result = await deleteBookmark(deleteBookmarkId)
 
     if (!result.success) {
-      toast.error(result.error || t('removeError'))
+      toast.error(result.error ? te(result.error) : t('removeError'))
     } else {
       setBookmarks(bookmarks.filter((b) => b.id !== deleteBookmarkId))
       toast.success(t('bookmarkRemoved'))

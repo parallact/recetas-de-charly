@@ -25,7 +25,7 @@ export async function getUserProfile() {
     })
 
     if (!profile) {
-      return { success: false, error: 'Perfil no encontrado', data: null }
+      return { success: false, error: 'profileNotFound', data: null }
     }
 
     return {
@@ -62,10 +62,10 @@ export async function updateUserProfile(data: ProfileData) {
 
     // Validate bio
     if (data.bio && !data.bio.trim()) {
-      return { success: false, error: 'La bio no puede contener solo espacios' }
+      return { success: false, error: 'bioOnlySpaces' }
     }
     if (data.bio && data.bio.length > 300) {
-      return { success: false, error: 'La bio no puede exceder 300 caracteres' }
+      return { success: false, error: 'bioTooLong' }
     }
 
     await prisma.profiles.update({

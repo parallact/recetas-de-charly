@@ -45,6 +45,7 @@ export function TagSelector({
   const [showInput, setShowInput] = useState(false)
   const t = useTranslations('tags')
   const tc = useTranslations('common')
+  const te = useTranslations('serverErrors')
 
   useEffect(() => {
     async function loadTags() {
@@ -94,7 +95,7 @@ export function TagSelector({
     const result = await createTag(trimmedName, slug)
 
     if (!result.success) {
-      toast.error(result.error || t('createError'))
+      toast.error(result.error ? te(result.error) : t('createError'))
     } else if (result.data) {
       setTags(prev => [...prev, result.data!].sort((a, b) => a.name.localeCompare(b.name)))
       onTagsChange([...selectedTags, result.data.id])

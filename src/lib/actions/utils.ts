@@ -22,7 +22,7 @@ export async function requireAuth(): Promise<AuthResult> {
   const session = await auth()
 
   if (!session?.user?.id) {
-    return { user: null, error: 'No autenticado' }
+    return { user: null, error: 'notAuthenticated' }
   }
 
   return {

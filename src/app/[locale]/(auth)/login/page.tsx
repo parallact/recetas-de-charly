@@ -14,6 +14,7 @@ import { ChefHat, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { loginUser } from '@/lib/actions/auth'
 import { sanitizeEmail, getEmailError } from '@/lib/validators/email'
+import { ScaleIn } from '@/components/ui/motion'
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const t = useTranslations('auth')
+  const te = useTranslations('serverErrors')
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +34,7 @@ export default function LoginPage() {
       const cleanEmail = sanitizeEmail(email)
       const emailError = getEmailError(cleanEmail)
       if (emailError) {
-        toast.error(emailError)
+        toast.error(te(emailError))
         setIsLoading(false)
         return
       }
@@ -40,7 +42,7 @@ export default function LoginPage() {
       const result = await loginUser(cleanEmail, password, redirectTo)
 
       if (result?.error) {
-        toast.error(result.error)
+        toast.error(te(result.error))
       }
     } catch {
       toast.error(t('loginError'))
@@ -54,6 +56,7 @@ export default function LoginPage() {
   }
 
   return (
+    <ScaleIn>
     <Card className="w-full max-w-md">
       <CardHeader className="text-center landscape:py-3">
         <div className="flex justify-center mb-4 landscape:mb-2 landscape:hidden">
@@ -151,5 +154,6 @@ export default function LoginPage() {
         </p>
       </CardFooter>
     </Card>
+    </ScaleIn>
   )
 }

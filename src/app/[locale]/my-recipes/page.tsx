@@ -55,6 +55,7 @@ export default function MyRecipesPage() {
   const tc = useTranslations('common')
   const tr = useTranslations('recipes')
   const ta = useTranslations('auth')
+  const te = useTranslations('serverErrors')
 
   const loadRecipes = useCallback(async () => {
     if (status === 'loading') return
@@ -68,7 +69,7 @@ export default function MyRecipesPage() {
     const result = await getUserRecipes()
 
     if (!result.success) {
-      toast.error(result.error || 'Error al cargar tus recetas')
+      toast.error(result.error ? te(result.error) : t('noRecipes'))
     } else {
       setRecipes(result.data)
     }
@@ -150,7 +151,7 @@ export default function MyRecipesPage() {
                       variant="secondary"
                       size="icon"
                       className="h-8 w-8 opacity-70 hover:opacity-100 focus:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm hover:bg-background shadow-sm"
-                      aria-label="Opciones de receta"
+                      aria-label={t('recipeOptions')}
                     >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
@@ -159,7 +160,7 @@ export default function MyRecipesPage() {
                     <DropdownMenuItem asChild>
                       <Link href={`/recipes/${recipe.id}/edit`}>
                         <Pencil className="mr-2 h-4 w-4" />
-                        Editar
+                        {t('edit')}
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

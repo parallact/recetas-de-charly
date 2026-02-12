@@ -14,6 +14,7 @@ import { RecipeCard } from '@/components/recipes/recipe-card'
 import { Badge } from '@/components/ui/badge'
 import { Prisma } from '@/generated/prisma'
 import { getTranslations } from 'next-intl/server'
+import { StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
 const RECIPES_PER_PAGE = 12
 
@@ -164,7 +165,7 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
       error: null
     }
   } catch {
-    return { ...emptyResult, error: 'Error al buscar recetas' }
+    return { ...emptyResult, error: 'searchError' }
   }
 }
 
@@ -333,11 +334,13 @@ export default async function SearchPage({
 
       {!error && recipes.length > 0 ? (
         <>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer staggerDelay={0.08} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
+            <StaggerItem key={recipe.id}>
+              <RecipeCard recipe={recipe} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
 
         {/* Pagination Controls */}
         {totalPages > 1 && (

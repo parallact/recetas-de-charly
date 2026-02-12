@@ -23,28 +23,28 @@ export async function getUploadUrl(
 ): Promise<UploadUrlResult> {
   const { user, error } = await requireAuth()
   if (!user) {
-    return { success: false, error: error || 'No autenticado' }
+    return { success: false, error: error || 'notAuthenticated' }
   }
 
   // Validate content type
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
   if (!ALLOWED_TYPES.includes(contentType)) {
-    return { success: false, error: 'Tipo de archivo no permitido' }
+    return { success: false, error: 'fileTypeNotAllowed' }
   }
 
   // Validate file size
   const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
   if (fileSize && fileSize > MAX_FILE_SIZE) {
-    return { success: false, error: 'El archivo es demasiado grande (máximo 5MB)' }
+    return { success: false, error: 'fileTooLarge' }
   }
 
   const r2 = getR2Client()
   if (!r2) {
-    return { success: false, error: 'El almacenamiento de archivos no está configurado. Contacta al administrador.' }
+    return { success: false, error: 'storageNotConfigured' }
   }
 
   if (!process.env.R2_PUBLIC_URL) {
-    return { success: false, error: 'URL pública de almacenamiento no configurada. Contacta al administrador.' }
+    return { success: false, error: 'storageUrlNotConfigured' }
   }
 
   try {
@@ -80,17 +80,17 @@ export async function getUploadUrl(
 export async function deleteFile(key: string): Promise<{ success: boolean; error?: string }> {
   const { user, error } = await requireAuth()
   if (!user) {
-    return { success: false, error: error || 'No autenticado' }
+    return { success: false, error: error || 'notAuthenticated' }
   }
 
   const r2 = getR2Client()
   if (!r2) {
-    return { success: false, error: 'Storage no configurado' }
+    return { success: false, error: 'storageNotConfigured' }
   }
 
   // Security: Only allow deleting files in user's folder
   if (!key.includes(`/${user.id}/`)) {
-    return { success: false, error: 'No tienes permiso para eliminar este archivo' }
+    return { success: false, error: 'noDeleteFilePermission' }
   }
 
   try {

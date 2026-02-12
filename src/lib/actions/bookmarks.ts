@@ -126,7 +126,7 @@ export async function deleteBookmark(bookmarkId: string) {
     })
 
     if (!bookmark || bookmark.user_id !== user.id) {
-      return { success: false, error: 'No tienes permiso' }
+      return { success: false, error: 'noPermission' }
     }
 
     await prisma.bookmarks.delete({

@@ -18,6 +18,7 @@ export default function EditRecipePage() {
   const recipeId = params.id as string
   const { data: session, status } = useSession()
   const ta = useTranslations('auth')
+  const te = useTranslations('serverErrors')
 
   const [initialLoading, setInitialLoading] = useState(true)
   const [initialData, setInitialData] = useState<RecipeFormData | null>(null)
@@ -39,7 +40,7 @@ export default function EditRecipePage() {
       const result = await getRecipeForEdit(recipeId)
 
       if (!result.success || !result.data) {
-        toast.error(result.error || 'No se encontro la receta')
+        toast.error(result.error ? te(result.error) : te('recipeNotFound'))
         router.push('/my-recipes')
         return
       }

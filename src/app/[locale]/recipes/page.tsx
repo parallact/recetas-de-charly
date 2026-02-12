@@ -7,6 +7,7 @@ import type { Recipe, Category } from '@/lib/types'
 import { RecipeCard } from '@/components/recipes/recipe-card'
 import { Pagination } from '@/components/ui/pagination'
 import { getTranslations } from 'next-intl/server'
+import { StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
 const RECIPES_PER_PAGE = 12
 
@@ -177,15 +178,16 @@ export default async function RecipesPage({
         </div>
       ) : (
         <>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer staggerDelay={0.08} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map((recipe) => (
-            <RecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              useIconPlaceholder
-            />
+            <StaggerItem key={recipe.id}>
+              <RecipeCard
+                recipe={recipe}
+                useIconPlaceholder
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
 
         <Pagination
           currentPage={currentPage}

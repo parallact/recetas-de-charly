@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { registerUser } from '@/lib/actions/auth'
 import { getEmailError } from '@/lib/validators/email'
 import { getNameError } from '@/lib/validators/name'
+import { ScaleIn } from '@/components/ui/motion'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -27,34 +28,35 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const t = useTranslations('auth')
+  const te = useTranslations('serverErrors')
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
 
     const nameError = getNameError(name)
     if (nameError) {
-      toast.error(nameError)
+      toast.error(te(nameError))
       return
     }
 
     const emailError = getEmailError(email)
     if (emailError) {
-      toast.error(emailError)
+      toast.error(te(emailError))
       return
     }
 
     if (!password.trim()) {
-      toast.error('La contraseña no puede contener solo espacios')
+      toast.error(te('passwordOnlySpaces'))
       return
     }
 
     if (password !== confirmPassword) {
-      toast.error('Las contraseñas no coinciden')
+      toast.error(te('passwordsMismatch'))
       return
     }
 
     if (password.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres')
+      toast.error(te('passwordTooShort'))
       return
     }
 
@@ -64,7 +66,7 @@ export default function RegisterPage() {
       const result = await registerUser(name, email, password)
 
       if (!result.success) {
-        toast.error(result.error || t('registerError'))
+        toast.error(result.error ? te(result.error) : t('registerError'))
         return
       }
 
@@ -95,6 +97,7 @@ export default function RegisterPage() {
   }
 
   return (
+    <ScaleIn>
     <Card className="w-full max-w-md">
       <CardHeader className="text-center landscape:py-3">
         <div className="flex justify-center mb-4 landscape:hidden">
@@ -218,5 +221,6 @@ export default function RegisterPage() {
         </p>
       </CardFooter>
     </Card>
+    </ScaleIn>
   )
 }

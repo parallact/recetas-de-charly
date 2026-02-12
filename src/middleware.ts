@@ -6,14 +6,9 @@ const intlMiddleware = createIntlMiddleware(routing)
 
 const protectedPaths = ['/profile', '/bookmarks', '/my-recipes', '/recipes/new']
 
-function getPathWithoutLocale(pathname: string): string {
-  return pathname.replace(/^\/(es|en)/, '') || '/'
-}
-
 function isProtectedPath(pathname: string): boolean {
-  const path = getPathWithoutLocale(pathname)
-  if (protectedPaths.some(p => path === p || path.startsWith(p + '/'))) return true
-  if (/^\/recipes\/[^/]+\/edit$/.test(path)) return true
+  if (protectedPaths.some(p => pathname === p || pathname.startsWith(p + '/'))) return true
+  if (/^\/recipes\/[^/]+\/edit$/.test(pathname)) return true
   return false
 }
 
@@ -23,10 +18,7 @@ export default function middleware(request: NextRequest) {
                           request.cookies.get('__Secure-authjs.session-token')
 
     if (!sessionToken) {
-      const localeMatch = request.nextUrl.pathname.match(/^\/(es|en)/)
-      const locale = localeMatch?.[1] || 'es'
-      const loginPath = locale === 'es' ? '/login' : `/${locale}/login`
-      return NextResponse.redirect(new URL(loginPath, request.url))
+      return NextResponse.redirect(new URL('/login', request.url))
     }
   }
 

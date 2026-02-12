@@ -17,10 +17,10 @@ export function isPrismaError(error: unknown): error is { code: string; message:
 export function handleActionError(error: unknown, context: string): string {
   if (isPrismaError(error)) {
     if (error.code === 'P2002') {
-      return 'Este registro ya existe'
+      return 'duplicateRecord'
     }
     if (error.code === 'P2025') {
-      return 'Registro no encontrado'
+      return 'recordNotFound'
     }
   }
 
@@ -29,5 +29,5 @@ export function handleActionError(error: unknown, context: string): string {
     console.error(`Error in ${context}:`, error)
   }
 
-  return 'Error del servidor'
+  return 'serverError'
 }

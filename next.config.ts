@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
-      },
-      {
-        protocol: 'https',
         hostname: '*.r2.cloudflarestorage.com',
       },
       {
@@ -51,7 +47,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://*.r2.cloudflarestorage.com https://*.r2.dev",
+              "connect-src 'self' https://*.r2.cloudflarestorage.com https://*.r2.dev",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'"

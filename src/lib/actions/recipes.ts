@@ -55,7 +55,7 @@ export async function deleteRecipe(recipeId: string) {
     })
 
     if (!recipe || recipe.user_id !== user.id) {
-      return { success: false, error: 'No tienes permiso para eliminar esta receta' }
+      return { success: false, error: 'noDeletePermission' }
     }
 
     await prisma.recipes.delete({
@@ -96,7 +96,7 @@ export async function getRecipeForEdit(recipeId: string) {
     })
 
     if (!recipe) {
-      return { success: false, error: 'Receta no encontrada', data: null }
+      return { success: false, error: 'recipeNotFound', data: null }
     }
 
     return { success: true, data: recipe }
