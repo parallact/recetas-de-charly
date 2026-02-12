@@ -92,7 +92,7 @@ export async function registerUser(
       return { success: false, error: 'passwordOnlySpaces' }
     }
 
-    if (cleanPassword.length < 6) {
+    if (cleanPassword.length < 8) {
       return { success: false, error: 'passwordTooShort' }
     }
 

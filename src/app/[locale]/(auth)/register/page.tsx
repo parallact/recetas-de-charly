@@ -58,7 +58,7 @@ export default function RegisterPage() {
       return
     }
 
-    if (trimmedPassword.length < 6) {
+    if (trimmedPassword.length < 8) {
       toast.error(te('passwordTooShort'))
       return
     }

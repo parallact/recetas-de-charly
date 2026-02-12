@@ -142,6 +142,7 @@ export function ImageUpload({
         // Complete progress
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current)
+          progressIntervalRef.current = null
         }
         setUploadState(prev => ({ ...prev, progress: 100, status: 'success' }))
 
@@ -157,6 +158,7 @@ export function ImageUpload({
       } finally {
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current)
+          progressIntervalRef.current = null
         }
         setUploadState({
           isUploading: false,

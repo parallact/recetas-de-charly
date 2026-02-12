@@ -48,8 +48,12 @@ export async function getUploadUrl(
   }
 
   try {
-    // Generate unique filename
+    // Generate unique filename with extension allowlist
+    const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
     const ext = filename.split('.').pop()?.toLowerCase() || 'jpg'
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return { success: false, error: 'invalidFileExtension' }
+    }
     const timestamp = Date.now()
     const random = Math.random().toString(36).substring(2, 8)
     const key = `${folder}/${user.id}/${timestamp}-${random}.${ext}`

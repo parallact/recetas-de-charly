@@ -29,11 +29,21 @@ export async function createTag(name: string, slug: string) {
     return { success: false, error: error || 'notAuthenticated', data: null }
   }
 
+  const trimmedName = name.trim()
+  if (!trimmedName || trimmedName.length > 50) {
+    return { success: false, error: 'tagNameInvalid', data: null }
+  }
+
+  const trimmedSlug = slug.trim()
+  if (!/^[a-z0-9-]+$/.test(trimmedSlug)) {
+    return { success: false, error: 'invalidSlug', data: null }
+  }
+
   try {
     const tag = await prisma.tags.create({
       data: {
-        name: name.trim(),
-        slug,
+        name: trimmedName,
+        slug: trimmedSlug,
       },
       select: {
         id: true,

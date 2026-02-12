@@ -43,12 +43,17 @@ export async function addRecipeNote(recipeId: string, content: string, isPrivate
     return { success: false, error, data: null }
   }
 
+  const trimmed = content.trim()
+  if (trimmed.length > 5000) {
+    return { success: false, error: 'noteTooLong', data: null }
+  }
+
   try {
     const note = await prisma.recipe_notes.create({
       data: {
         user_id: user.id,
         recipe_id: recipeId,
-        content: content.trim(),
+        content: trimmed,
         is_private: isPrivate,
       }
     })
@@ -86,10 +91,15 @@ export async function updateRecipeNote(noteId: string, content: string) {
       return { success: false, error: 'noPermission' }
     }
 
+    const trimmed = content.trim()
+    if (trimmed.length > 5000) {
+      return { success: false, error: 'noteTooLong' }
+    }
+
     await prisma.recipe_notes.update({
       where: { id: noteId },
       data: {
-        content: content.trim(),
+        content: trimmed,
         updated_at: new Date(),
       }
     })
