@@ -40,8 +40,10 @@ export default function LoginPage() {
         return
       }
 
+      const trimmedPassword = password.trim()
+
       // Server-side validation (rate-limited + credential check)
-      const result = await loginUser(cleanEmail, password)
+      const result = await loginUser(cleanEmail, trimmedPassword)
 
       if (result?.error) {
         toast.error(te(result.error))
@@ -51,7 +53,7 @@ export default function LoginPage() {
       // Credentials valid — sign in on client side
       const signInResult = await signIn('credentials', {
         email: cleanEmail,
-        password,
+        password: trimmedPassword,
         redirect: false,
       })
 
@@ -87,7 +89,7 @@ export default function LoginPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 landscape:py-2">
-        <form onSubmit={handleCredentialsLogin} className="space-y-4">
+        <form onSubmit={handleCredentialsLogin} noValidate className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">{t('email')}</Label>
             <Input
@@ -97,7 +99,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              maxLength={255}
+              maxLength={50}
               disabled={isLoading}
             />
           </div>

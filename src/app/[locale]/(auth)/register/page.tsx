@@ -45,17 +45,20 @@ export default function RegisterPage() {
       return
     }
 
-    if (!password.trim()) {
+    const trimmedPassword = password.trim()
+    const trimmedConfirm = confirmPassword.trim()
+
+    if (!trimmedPassword) {
       toast.error(te('passwordOnlySpaces'))
       return
     }
 
-    if (password !== confirmPassword) {
+    if (trimmedPassword !== trimmedConfirm) {
       toast.error(te('passwordsMismatch'))
       return
     }
 
-    if (password.length < 6) {
+    if (trimmedPassword.length < 6) {
       toast.error(te('passwordTooShort'))
       return
     }
@@ -63,7 +66,7 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const result = await registerUser(name, email, password)
+      const result = await registerUser(name, email, trimmedPassword)
 
       if (!result.success) {
         toast.error(result.error ? te(result.error) : t('registerError'))
@@ -98,7 +101,7 @@ export default function RegisterPage() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 landscape:py-2">
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleRegister} noValidate className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{t('name')}</Label>
             <Input
@@ -121,7 +124,7 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              maxLength={255}
+              maxLength={50}
               disabled={isLoading}
             />
           </div>

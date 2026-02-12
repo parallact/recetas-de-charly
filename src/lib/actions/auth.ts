@@ -30,7 +30,8 @@ export async function loginUser(
     return { error: emailError }
   }
 
-  if (!password) {
+  const cleanPassword = password.trim()
+  if (!cleanPassword) {
     return { error: 'passwordRequired' }
   }
 
@@ -43,7 +44,7 @@ export async function loginUser(
     return { error: 'invalidCredentials' }
   }
 
-  const isValidPassword = await bcrypt.compare(password, user.password)
+  const isValidPassword = await bcrypt.compare(cleanPassword, user.password)
   if (!isValidPassword) {
     return { error: 'invalidCredentials' }
   }
@@ -74,7 +75,9 @@ export async function registerUser(
       return { success: false, error: nameError }
     }
 
-    if (password.length > 128) {
+    const cleanPassword = password.trim()
+
+    if (cleanPassword.length > 128) {
       return { success: false, error: 'passwordTooLong' }
     }
 
@@ -85,11 +88,11 @@ export async function registerUser(
       return { success: false, error: emailError }
     }
 
-    if (!password.trim()) {
+    if (!cleanPassword) {
       return { success: false, error: 'passwordOnlySpaces' }
     }
 
-    if (password.length < 6) {
+    if (cleanPassword.length < 6) {
       return { success: false, error: 'passwordTooShort' }
     }
 
@@ -102,8 +105,8 @@ export async function registerUser(
       return { success: false, error: 'emailTaken' }
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // Hash password (trimmed)
+    const hashedPassword = await bcrypt.hash(cleanPassword, 10)
 
     // Create user with password
     const user = await prisma.users.create({
