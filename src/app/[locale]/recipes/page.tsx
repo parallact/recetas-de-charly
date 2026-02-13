@@ -121,23 +121,15 @@ export default async function RecipesPage({
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">
-            {currentCategory ? (tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name) : t('allRecipes')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {currentCategory
-              ? `${t('recipesOf')} ${(tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name).toLowerCase()}`
-              : t('exploreCollection')}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/recipes/new">
-            <Plus className="mr-2 h-4 w-4" />
-            {tc('newRecipe')}
-          </Link>
-        </Button>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">
+          {currentCategory ? (tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name) : t('allRecipes')}
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          {currentCategory
+            ? `${t('recipesOf')} ${(tcat.has(currentCategory.slug) ? tcat(currentCategory.slug) : currentCategory.name).toLowerCase()}`
+            : t('exploreCollection')}
+        </p>
       </div>
 
       {/* Category filters */}

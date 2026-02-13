@@ -128,14 +128,8 @@ export default function MyRecipesPage() {
 
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <Button asChild>
-          <Link href="/recipes/new">
-            <Plus className="h-4 w-4 mr-1.5" />
-            {tc('newRecipe')}
-          </Link>
-        </Button>
       </div>
 
       {recipes.length > 0 ? (
