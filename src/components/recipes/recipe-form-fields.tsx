@@ -123,6 +123,7 @@ export function RecipeFormFields({
                   <Input
                     type="number"
                     min="0"
+                    max="1440"
                     placeholder="15"
                     {...field}
                   />
@@ -142,6 +143,7 @@ export function RecipeFormFields({
                   <Input
                     type="number"
                     min="0"
+                    max="1440"
                     placeholder="30"
                     {...field}
                   />
@@ -161,6 +163,7 @@ export function RecipeFormFields({
                   <Input
                     type="number"
                     min="1"
+                    max="50"
                     placeholder="4"
                     {...field}
                   />
