@@ -26,9 +26,9 @@ const recipeInputSchema = z.object({
   servings: z.number().int().min(1).max(50),
   difficulty: z.string().min(1).max(20),
   is_public: z.boolean(),
-  ingredients: z.array(ingredientInputSchema).min(1),
+  ingredients: z.array(ingredientInputSchema).min(1).max(25),
   instructions: z.array(instructionInputSchema).min(1),
-  category_ids: z.array(z.string()),
+  category_ids: z.array(z.string()).max(3),
   tag_ids: z.array(z.string()).max(7),
 })
 

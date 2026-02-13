@@ -178,7 +178,9 @@
     "updateSuccess": "Recipe updated successfully!",
     "createError": "Error creating recipe",
     "updateError": "Error updating recipe",
-    "idNotFound": "Recipe ID not found"
+    "idNotFound": "Recipe ID not found",
+    "maxCategoriesReached": "Maximum 3 categories per recipe",
+    "totalTime": "Total time"
   },
   "bookmarks": {
     "title": "My Bookmarks",

@@ -178,7 +178,9 @@
     "updateSuccess": "Receta actualizada exitosamente!",
     "createError": "Error al crear la receta",
     "updateError": "Error al actualizar la receta",
-    "idNotFound": "ID de receta no encontrado"
+    "idNotFound": "ID de receta no encontrado",
+    "maxCategoriesReached": "Maximo 3 categorias por receta",
+    "totalTime": "Tiempo total"
   },
   "bookmarks": {
     "title": "Mis Guardados",

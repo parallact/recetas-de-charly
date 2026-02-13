@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import {
   FormControl,
@@ -22,6 +23,15 @@ import { getAllCategories } from '@/lib/actions/categories'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import type { Category } from '@/lib/types'
 import { useTranslations } from 'next-intl'
+
+const MAX_CATEGORIES = 3
+
+/** Block "e", "E", "+", "-" in number inputs (HTML allows these for scientific notation) */
+function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (['e', 'E', '+', '-'].includes(e.key)) {
+    e.preventDefault()
+  }
+}
 
 interface RecipeFormFieldsProps {
   form: UseFormReturn<RecipeFormData>
@@ -42,6 +52,10 @@ export function RecipeFormFields({
   const t = useTranslations('recipeForm')
   const td = useTranslations('difficulty')
   const tcat = useTranslations('categoryNames')
+
+  const prepTime = form.watch('prepTime')
+  const cookingTime = form.watch('cookingTime')
+  const totalTime = (parseInt(prepTime || '0') || 0) + (parseInt(cookingTime || '0') || 0)
 
   useEffect(() => {
     async function loadCategories() {
@@ -125,6 +139,7 @@ export function RecipeFormFields({
                     min="0"
                     max="1440"
                     placeholder="15"
+                    onKeyDown={blockInvalidNumberKeys}
                     {...field}
                   />
                 </FormControl>
@@ -145,6 +160,7 @@ export function RecipeFormFields({
                     min="0"
                     max="1440"
                     placeholder="30"
+                    onKeyDown={blockInvalidNumberKeys}
                     {...field}
                   />
                 </FormControl>
@@ -165,6 +181,7 @@ export function RecipeFormFields({
                     min="1"
                     max="50"
                     placeholder="4"
+                    onKeyDown={blockInvalidNumberKeys}
                     {...field}
                   />
                 </FormControl>
@@ -196,27 +213,43 @@ export function RecipeFormFields({
             )}
           />
         </div>
+
+        {totalTime > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {t('totalTime')}: <span className="font-medium text-foreground">{totalTime} min</span>
+          </p>
+        )}
       </div>
 
       <Separator />
 
       {/* Categories */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-base flex items-center gap-2">
-          <span className="w-1 h-5 rounded-full bg-accent" />
-          {t('categories')}
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-base flex items-center gap-2">
+            <span className="w-1 h-5 rounded-full bg-accent" />
+            {t('categories')}
+          </h3>
+          <span className="text-xs text-muted-foreground">{selectedCategories.length}/{MAX_CATEGORIES}</span>
+        </div>
         <div className="flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <Badge
-              key={category.id}
-              variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => onToggleCategory(category.id)}
-            >
-              {category.icon} {tcat.has(category.slug) ? tcat(category.slug) : category.name}
-            </Badge>
-          ))}
+          {categories.map((category) => {
+            const isSelected = selectedCategories.includes(category.id)
+            const isDisabled = !isSelected && selectedCategories.length >= MAX_CATEGORIES
+            return (
+              <Badge
+                key={category.id}
+                variant={isSelected ? 'default' : 'outline'}
+                className={cn(
+                  "cursor-pointer",
+                  isDisabled && "opacity-40 cursor-not-allowed"
+                )}
+                onClick={() => !isDisabled && onToggleCategory(category.id)}
+              >
+                {category.icon} {tcat.has(category.slug) ? tcat(category.slug) : category.name}
+              </Badge>
+            )
+          })}
         </div>
       </div>
 

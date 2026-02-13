@@ -15,6 +15,15 @@ import { INGREDIENT_UNITS } from '@/lib/constants'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import { useTranslations } from 'next-intl'
 
+const MAX_INGREDIENTS = 25
+
+/** Block "e", "E", "+", "-" in number inputs */
+function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (['e', 'E', '+', '-'].includes(e.key)) {
+    e.preventDefault()
+  }
+}
+
 interface RecipeIngredientsProps {
   form: UseFormReturn<RecipeFormData>
 }
@@ -39,15 +48,19 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
           <span className="w-1 h-5 rounded-full bg-accent" />
           {t('ingredientsTitle')}
         </h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => appendIngredient({ name: '', quantity: '', unit: '', customUnit: '' })}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          {tc('add')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{ingredientFields.length}/{MAX_INGREDIENTS}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => appendIngredient({ name: '', quantity: '', unit: '', customUnit: '' })}
+            disabled={ingredientFields.length >= MAX_INGREDIENTS}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {tc('add')}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -90,7 +103,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="w-20">
                       <FormControl>
-                        <Input placeholder={t('quantity')} {...field} />
+                        <Input type="number" inputMode="decimal" step="any" min="0" onKeyDown={blockInvalidNumberKeys} placeholder={t('quantity')} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -124,7 +137,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                     render={({ field }) => (
                       <FormItem className="w-24">
                         <FormControl>
-                          <Input placeholder={t('unit')} {...field} />
+                          <Input placeholder={t('unit')} maxLength={20} {...field} />
                         </FormControl>
                       </FormItem>
                     )}
@@ -142,7 +155,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="w-20">
                       <FormControl>
-                        <Input placeholder={t('quantity')} {...field} />
+                        <Input type="number" inputMode="decimal" step="any" min="0" onKeyDown={blockInvalidNumberKeys} placeholder={t('quantity')} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -178,7 +191,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                     render={({ field }) => (
                       <FormItem className="w-24">
                         <FormControl>
-                          <Input placeholder={t('unit')} {...field} />
+                          <Input placeholder={t('unit')} maxLength={20} {...field} />
                         </FormControl>
                       </FormItem>
                     )}

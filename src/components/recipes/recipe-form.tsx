@@ -112,12 +112,17 @@ export function RecipeForm({
   }, [])
 
   const toggleCategory = useCallback((categoryId: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
-    )
-  }, [])
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId)
+      }
+      if (prev.length >= 3) {
+        toast.error(t('maxCategoriesReached'))
+        return prev
+      }
+      return [...prev, categoryId]
+    })
+  }, [t])
 
   const onSubmit = async (data: RecipeFormData) => {
     if (status === 'loading') return
