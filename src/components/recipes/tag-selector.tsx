@@ -7,14 +7,17 @@ import { Input } from '@/components/ui/input'
 import { X, Plus, Tag, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { getAllTags, createTag } from '@/lib/actions/tags'
+import { getAllTags, createTag, deleteTag } from '@/lib/actions/tags'
 import { useTranslations } from 'next-intl'
 
 interface TagData {
   id: string
   name: string
   slug: string
+  is_default?: boolean
 }
+
+const MAX_TAGS = 7
 
 interface TagSelectorProps {
   selectedTags: string[]
@@ -65,12 +68,21 @@ export function TagSelector({
     if (selectedTags.includes(tagId)) {
       onTagsChange(selectedTags.filter(id => id !== tagId))
     } else {
+      if (selectedTags.length >= MAX_TAGS) {
+        toast.error(t('maxTagsReached'))
+        return
+      }
       onTagsChange([...selectedTags, tagId])
     }
-  }, [selectedTags, onTagsChange])
+  }, [selectedTags, onTagsChange, t])
 
   const handleCreateTag = async () => {
     if (!newTagName.trim()) return
+
+    if (selectedTags.length >= MAX_TAGS) {
+      toast.error(t('maxTagsReached'))
+      return
+    }
 
     const trimmedName = newTagName.trim()
     const slug = generateSlug(trimmedName)
@@ -105,6 +117,17 @@ export function TagSelector({
     }
 
     setIsCreating(false)
+  }
+
+  const handleDeleteTag = async (tagId: string) => {
+    const result = await deleteTag(tagId)
+    if (!result.success) {
+      toast.error(result.error ? te(result.error) : t('createError'))
+      return
+    }
+    setTags(prev => prev.filter(t => t.id !== tagId))
+    onTagsChange(selectedTags.filter(id => id !== tagId))
+    toast.success(t('tagDeleted'))
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -160,19 +183,40 @@ export function TagSelector({
         </div>
       )}
 
+      {/* Tag count */}
+      <p className="text-xs text-muted-foreground">
+        {selectedTags.length}/{MAX_TAGS}
+      </p>
+
       {/* Available Tags */}
       {availableTags.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {availableTags.map(tag => (
-            <Badge
-              key={tag.id}
-              variant="outline"
-              className="cursor-pointer hover:bg-muted transition-colors"
-              onClick={() => toggleTag(tag.id)}
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              {tag.name}
-            </Badge>
+            <div key={tag.id} className="flex items-center gap-0.5">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "cursor-pointer transition-colors",
+                  selectedTags.length >= MAX_TAGS
+                    ? "opacity-40 cursor-not-allowed"
+                    : "hover:bg-muted"
+                )}
+                onClick={() => toggleTag(tag.id)}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                {tag.name}
+              </Badge>
+              {!tag.is_default && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTag(tag.id)}
+                  className="p-0.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                  title={tc('delete')}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           ))}
         </div>
       )}

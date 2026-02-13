@@ -290,7 +290,9 @@
     "createNewTag": "Create new tag",
     "noTags": "No tags available. Create the first one!",
     "tagCreated": "Tag created",
-    "createError": "Error creating tag"
+    "createError": "Error creating tag",
+    "maxTagsReached": "Maximum 7 tags per recipe",
+    "tagDeleted": "Tag deleted"
   },
   "difficulty": {
     "easy": "Easy",
@@ -318,6 +320,7 @@
     "maxSize": "Image cannot exceed {maxSizeMB}MB",
     "uploadUrlError": "Error getting upload URL",
     "networkError": "Could not connect to file server. Check your internet connection.",
+    "corsError": "Could not upload image to server. Try using an external URL instead.",
     "uploadError": "Error uploading image ({status})",
     "genericError": "Error uploading image",
     "uploadSuccess": "Image uploaded",
@@ -369,7 +372,9 @@
     "storageNotConfigured": "File storage is not configured",
     "storageUrlNotConfigured": "Storage URL is not configured",
     "noteTooLong": "Note cannot exceed 5000 characters",
-    "tagNameInvalid": "Tag name must be between 1 and 50 characters",
+    "tagNameInvalid": "Only letters, numbers, and spaces allowed",
+    "tagNameTooShort": "Tag name must be at least 3 characters",
+    "cannotDeleteDefaultTag": "Cannot delete predefined tags",
     "invalidSlug": "Slug can only contain lowercase letters, numbers, and hyphens",
     "invalidFileExtension": "File extension not allowed. Use JPG, PNG, WEBP, or GIF",
     "duplicateTag": "This tag already exists",

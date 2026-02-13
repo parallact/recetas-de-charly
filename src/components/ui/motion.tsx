@@ -40,10 +40,35 @@ export function FadeIn({
   )
 }
 
+// Float up with subtle scale — ideal for cards
+export function FloatUp({
+  children,
+  delay = 0,
+  duration = 0.6,
+  className,
+}: {
+  children: ReactNode
+  delay?: number
+  duration?: number
+  className?: string
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30, scale: 0.97 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
 // Stagger children animations
 export function StaggerContainer({
   children,
-  staggerDelay = 0.1,
+  staggerDelay = 0.08,
   className,
 }: {
   children: ReactNode
@@ -74,8 +99,13 @@ export function StaggerItem({
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+        hidden: { opacity: 0, y: 20, scale: 0.97 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+        },
       }}
       className={className}
     >
@@ -84,10 +114,10 @@ export function StaggerItem({
   )
 }
 
-// Scale up on hover
+// Scale up on hover with warm shadow
 export function ScaleOnHover({
   children,
-  scale = 1.03,
+  scale = 1.02,
   className,
 }: {
   children: ReactNode
@@ -96,9 +126,9 @@ export function ScaleOnHover({
 }) {
   return (
     <motion.div
-      whileHover={{ scale }}
+      whileHover={{ scale, y: -4 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       className={className}
     >
       {children}
@@ -154,6 +184,31 @@ export function ScaleIn({
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, margin: '-50px' }}
       transition={{ duration, delay, ease: 'easeOut' }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// Blur in — text reveal effect
+export function BlurIn({
+  children,
+  delay = 0,
+  duration = 0.7,
+  className,
+}: {
+  children: ReactNode
+  delay?: number
+  duration?: number
+  className?: string
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, filter: 'blur(12px)', y: 8 }}
+      whileInView={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}

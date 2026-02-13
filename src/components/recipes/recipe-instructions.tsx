@@ -32,7 +32,10 @@ export function RecipeInstructions({ form }: RecipeInstructionsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">{t('instructionsTitle')}</h3>
+        <h3 className="font-semibold text-base flex items-center gap-2">
+          <span className="w-1 h-5 rounded-full bg-primary" />
+          {t('instructionsTitle')}
+        </h3>
         <Button
           type="button"
           variant="outline"
@@ -60,6 +63,7 @@ export function RecipeInstructions({ form }: RecipeInstructionsProps) {
                     <Textarea
                       placeholder={t('stepPlaceholder', { index: index + 1 })}
                       rows={2}
+                      maxLength={1000}
                       {...field}
                     />
                   </FormControl>

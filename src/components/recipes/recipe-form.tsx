@@ -221,14 +221,14 @@ export function RecipeForm({
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="rounded-2xl shadow-sm border-border/50">
+        <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-primary/10">
+            <div className="p-2.5 rounded-xl bg-primary/10">
               <ChefHat className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <CardTitle>{isCreate ? t('newRecipe') : t('editRecipe')}</CardTitle>
+              <CardTitle className="text-xl">{isCreate ? t('newRecipe') : t('editRecipe')}</CardTitle>
               <CardDescription>
                 {isCreate
                   ? t('shareSubtitle')
@@ -249,11 +249,11 @@ export function RecipeForm({
               />
 
               {/* Submit */}
-              <div className="flex justify-end gap-4">
+              <div className="flex justify-end gap-4 pt-4 border-t border-border/50">
                 <Button type="button" variant="outline" asChild>
                   <Link href={backUrl}>{tc('cancel')}</Link>
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading} size="lg">
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

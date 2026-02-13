@@ -20,7 +20,7 @@ import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth/get-user'
 import { DIFFICULTY_COLORS } from '@/lib/constants'
 import { getTranslations } from 'next-intl/server'
-import { FadeIn, StaggerContainer, StaggerItem } from '@/components/ui/motion'
+import { FadeIn, SlideIn, StaggerContainer, StaggerItem } from '@/components/ui/motion'
 
 interface TagInfo {
   name: string
@@ -166,7 +166,7 @@ export default async function RecipeDetailPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Image */}
-      <div className="relative h-[40vh] md:h-[50vh] overflow-hidden">
+      <div className="relative h-[45vh] md:h-[55vh] overflow-hidden">
         {recipe.image_url ? (
           <Image
             src={recipe.image_url}
@@ -177,38 +177,38 @@ export default async function RecipeDetailPage({
             className="object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <span className="text-6xl">🍽️</span>
+          <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+            <span className="text-7xl">🍽️</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
         {/* Action buttons in hero overlay */}
         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex gap-2">
           <LikeButton
             recipeId={recipe.id}
             variant="icon"
-            className="bg-background/80 backdrop-blur-sm hover:bg-background shadow-lg h-10 w-10"
+            className="bg-white/90 dark:bg-black/60 backdrop-blur-md hover:bg-white dark:hover:bg-black/80 shadow-lg h-10 w-10 rounded-full"
           />
           <BookmarkButton
             recipeId={recipe.id}
             variant="icon"
-            className="bg-background/80 backdrop-blur-sm hover:bg-background shadow-lg h-10 w-10"
+            className="bg-white/90 dark:bg-black/60 backdrop-blur-md hover:bg-white dark:hover:bg-black/80 shadow-lg h-10 w-10 rounded-full"
           />
         </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-          <div className="container">
+          <div className="container mx-auto max-w-7xl">
             <Link
               href="/recipes"
-              className="inline-flex items-center text-white/80 hover:text-white mb-4"
+              className="inline-flex items-center text-white/80 hover:text-white mb-4 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               {tc('backToRecipes')}
             </Link>
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
               {recipe.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-4 text-white/90">
+            <div className="flex flex-wrap items-center gap-3 text-white/90">
               {recipe.difficulty && (
                 <Badge
                   className={DIFFICULTY_COLORS[difficulty]}
@@ -218,15 +218,15 @@ export default async function RecipeDetailPage({
                 </Badge>
               )}
               {recipe.cooking_time && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{recipe.cooking_time} min</span>
+                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span className="text-sm">{recipe.cooking_time} min</span>
                 </div>
               )}
               {recipe.servings && (
-                <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  <span>{t('servings', { count: recipe.servings })}</span>
+                <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm rounded-full px-3 py-1">
+                  <Users className="h-3.5 w-3.5" />
+                  <span className="text-sm">{t('servings', { count: recipe.servings })}</span>
                 </div>
               )}
             </div>
@@ -288,15 +288,17 @@ export default async function RecipeDetailPage({
                   <CookingMode instructions={recipe.instructions} />
                 </div>
 
-                {/* Static instructions list */}
-                <StaggerContainer staggerDelay={0.1} className="space-y-6">
+                {/* Static instructions list — timeline style */}
+                <StaggerContainer staggerDelay={0.1} className="relative space-y-0">
+                  {/* Timeline line */}
+                  <div className="absolute left-4 top-4 bottom-4 w-px bg-border" />
                   {recipe.instructions.map((step, index) => (
                     <StaggerItem key={index}>
-                      <li className="flex gap-4">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                      <li className="flex gap-5 relative pb-8 last:pb-0">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm relative z-10 shadow-sm">
                           {index + 1}
                         </div>
-                        <p className="pt-1">{step}</p>
+                        <p className="pt-1 leading-relaxed">{step}</p>
                       </li>
                     </StaggerItem>
                   ))}
@@ -324,7 +326,7 @@ export default async function RecipeDetailPage({
 
           {/* Sidebar - Ingredients */}
           <div className="lg:col-span-1">
-            <FadeIn direction="right" delay={0.2}>
+            <SlideIn direction="right" delay={0.2}>
             <div className="sticky top-24 space-y-4">
               <ServingsScaler
                 originalServings={recipe.servings || 1}
@@ -332,11 +334,11 @@ export default async function RecipeDetailPage({
               />
 
               {recipe.categories.length > 0 && (
-                <div className="bg-muted/50 rounded-lg p-6">
-                  <h3 className="font-medium mb-3">{tc('categories')}</h3>
+                <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/10">
+                  <h3 className="font-semibold mb-3">{tc('categories')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {recipe.categories.map((category) => (
-                      <Badge key={category.slug} variant="secondary">
+                      <Badge key={category.slug} variant="warm">
                         {tcat.has(category.slug) ? tcat(category.slug) : category.name}
                       </Badge>
                     ))}
@@ -345,17 +347,17 @@ export default async function RecipeDetailPage({
               )}
 
               {recipe.tags.length > 0 && (
-                <div className="bg-muted/50 rounded-lg p-6">
+                <div className="bg-accent/5 dark:bg-accent/10 rounded-xl p-6 border border-accent/10">
                   <div className="flex items-center gap-2 mb-3">
-                    <Tag className="h-4 w-4" />
-                    <h3 className="font-medium">{t('tags')}</h3>
+                    <Tag className="h-4 w-4 text-accent" />
+                    <h3 className="font-semibold">{t('tags')}</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {recipe.tags.map((tag) => (
                       <Badge
                         key={tag.name}
-                        variant="outline"
-                                          >
+                        variant="accent"
+                      >
                         {tag.name}
                       </Badge>
                     ))}
@@ -363,7 +365,7 @@ export default async function RecipeDetailPage({
                 </div>
               )}
             </div>
-            </FadeIn>
+            </SlideIn>
           </div>
         </div>
       </div>

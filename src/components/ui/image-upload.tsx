@@ -8,7 +8,7 @@ import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Upload, CheckCircle2 
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
-import { getUploadUrl } from '@/lib/actions/storage'
+import { uploadFile } from '@/lib/actions/storage'
 import { cn } from '@/lib/utils'
 
 interface ImageUploadProps {
@@ -41,7 +41,7 @@ export function ImageUpload({
   onChange,
   className,
   aspectRatio = 'auto',
-  maxSizeMB = 5,
+  maxSizeMB = 4,
   rounded = false,
 }: ImageUploadProps) {
   const { data: session } = useSession()
@@ -114,29 +114,15 @@ export function ImageUpload({
       progressIntervalRef.current = setInterval(simulateProgress, 150)
 
       try {
-        // Get presigned URL from server
-        const result = await getUploadUrl(file.name, file.type, folder)
+        // Upload via server action (avoids CORS issues with R2)
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', folder)
 
-        if (!result.success || !result.uploadUrl || !result.publicUrl) {
-          throw new Error(result.error ? te(result.error) : t('uploadUrlError'))
-        }
+        const result = await uploadFile(formData)
 
-        // Upload directly to R2
-        let uploadResponse: Response
-        try {
-          uploadResponse = await fetch(result.uploadUrl, {
-            method: 'PUT',
-            body: file,
-            headers: {
-              'Content-Type': file.type,
-            },
-          })
-        } catch {
-          throw new Error(t('networkError'))
-        }
-
-        if (!uploadResponse.ok) {
-          throw new Error(t('uploadError', { status: uploadResponse.status }))
+        if (!result.success || !result.publicUrl) {
+          throw new Error(result.error ? te(result.error) : t('genericError'))
         }
 
         // Complete progress
@@ -169,7 +155,7 @@ export function ImageUpload({
         })
       }
     },
-    [session, folder, maxSizeMB, onChange, simulateProgress, t]
+    [session, folder, maxSizeMB, onChange, simulateProgress, t, te]
   )
 
   const handleDrop = useCallback(

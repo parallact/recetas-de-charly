@@ -55,7 +55,10 @@ export function RecipeFormFields({
     <div className="space-y-8">
       {/* Basic Info */}
       <div className="space-y-4">
-        <h3 className="font-medium">{t('basicInfo')}</h3>
+        <h3 className="font-semibold text-base flex items-center gap-2">
+          <span className="w-1 h-5 rounded-full bg-primary" />
+          {t('basicInfo')}
+        </h3>
 
         <FormField
           control={form.control}
@@ -64,7 +67,7 @@ export function RecipeFormFields({
             <FormItem>
               <FormLabel>{t('title')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('titlePlaceholder')} {...field} />
+                <Input placeholder={t('titlePlaceholder')} maxLength={100} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,6 +84,7 @@ export function RecipeFormFields({
                 <Textarea
                   placeholder={t('descriptionPlaceholder')}
                   rows={3}
+                  maxLength={500}
                   {...field}
                 />
               </FormControl>
@@ -195,7 +199,10 @@ export function RecipeFormFields({
 
       {/* Categories */}
       <div className="space-y-4">
-        <h3 className="font-medium">{t('categories')}</h3>
+        <h3 className="font-semibold text-base flex items-center gap-2">
+          <span className="w-1 h-5 rounded-full bg-accent" />
+          {t('categories')}
+        </h3>
         <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
             <Badge
@@ -215,7 +222,10 @@ export function RecipeFormFields({
         <>
           <Separator />
           <div className="space-y-4">
-            <h3 className="font-medium">{t('tags')}</h3>
+            <h3 className="font-semibold text-base flex items-center gap-2">
+              <span className="w-1 h-5 rounded-full bg-amber-500" />
+              {t('tags')}
+            </h3>
             <TagSelector
               selectedTags={selectedTags}
               onTagsChange={onTagsChange}

@@ -81,12 +81,12 @@ export function Header({ initialUser }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
       <div className="container mx-auto max-w-7xl flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <ChefHat className="h-6 w-6 text-primary" />
-          <span className="hidden sm:inline">{t('appName')}</span>
+        <Link href="/" className="flex items-center gap-2 font-bold text-xl group">
+          <ChefHat className="h-6 w-6 text-primary transition-transform duration-300 group-hover:rotate-12" />
+          <span className="hidden sm:inline bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">{t('appName')}</span>
         </Link>
 
         {/* Search Bar - Desktop */}
@@ -105,7 +105,7 @@ export function Header({ initialUser }: HeaderProps) {
           </Button>
           {user ? (
             <>
-              <Button variant="ghost" size="sm" asChild>
+              <Button size="sm" asChild>
                 <Link href="/recipes/new">
                   <Plus className="h-4 w-4 mr-1.5" />
                   {t('newRecipe')}

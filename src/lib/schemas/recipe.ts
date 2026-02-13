@@ -8,7 +8,7 @@ const positiveNumberString = z.string().optional().refine(
 
 // Zod schema for recipe form validation
 export const ingredientSchema = z.object({
-  name: z.string().min(2, 'Minimo 2 caracteres').max(100, 'Maximo 100 caracteres'),
+  name: z.string().min(2, 'Minimo 2 caracteres').max(100, 'Maximo 100 caracteres').regex(/^[A-Za-zÀ-ÿñÑ\s]+$/, 'Solo letras y espacios'),
   quantity: positiveNumberString,
   unit: z.string().optional(),
   customUnit: z.string().optional(),

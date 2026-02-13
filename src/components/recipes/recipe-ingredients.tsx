@@ -35,7 +35,10 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-medium">{t('ingredientsTitle')}</h3>
+        <h3 className="font-semibold text-base flex items-center gap-2">
+          <span className="w-1 h-5 rounded-full bg-accent" />
+          {t('ingredientsTitle')}
+        </h3>
         <Button
           type="button"
           variant="outline"
@@ -61,7 +64,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} {...field} />
+                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -188,7 +191,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} {...field} />
+                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

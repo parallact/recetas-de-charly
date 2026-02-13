@@ -7,29 +7,29 @@ import { requireAuth } from './utils'
 import { handleActionError, isPrismaError } from './error-utils'
 
 const ingredientInputSchema = z.object({
-  name: z.string().min(1).max(200).trim(),
+  name: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
   quantity: z.number().min(0).nullable(),
   unit: z.string().max(50).nullable(),
 })
 
 const instructionInputSchema = z.object({
-  content: z.string().min(1).max(2000).trim(),
+  content: z.string().min(1).max(1000).trim(),
 })
 
 const recipeInputSchema = z.object({
-  title: z.string().min(1).max(200).trim(),
+  title: z.string().min(1).max(100).trim(),
   slug: z.string().min(1).max(200),
-  description: z.string().max(1000).nullable(),
+  description: z.string().max(500).nullable(),
   image_url: z.union([z.string().url(), z.literal(''), z.null()]),
   prep_time: z.number().int().min(0).max(1440).nullable(),
   cooking_time: z.number().int().min(0).max(1440).nullable(),
-  servings: z.number().int().min(1).max(100),
+  servings: z.number().int().min(1).max(50),
   difficulty: z.string().min(1).max(20),
   is_public: z.boolean(),
   ingredients: z.array(ingredientInputSchema).min(1),
   instructions: z.array(instructionInputSchema).min(1),
   category_ids: z.array(z.string()),
-  tag_ids: z.array(z.string()),
+  tag_ids: z.array(z.string()).max(7),
 })
 
 type RecipeFormInput = z.infer<typeof recipeInputSchema>

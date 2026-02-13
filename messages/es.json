@@ -290,7 +290,9 @@
     "createNewTag": "Crear nuevo tag",
     "noTags": "No hay tags disponibles. Crea el primero!",
     "tagCreated": "Tag creado",
-    "createError": "Error al crear el tag"
+    "createError": "Error al crear el tag",
+    "maxTagsReached": "Maximo 7 tags por receta",
+    "tagDeleted": "Tag eliminado"
   },
   "difficulty": {
     "easy": "Facil",
@@ -318,6 +320,7 @@
     "maxSize": "La imagen no puede superar {maxSizeMB}MB",
     "uploadUrlError": "Error al obtener URL de subida",
     "networkError": "No se pudo conectar al servidor de archivos. Verifica tu conexion a internet.",
+    "corsError": "No se pudo subir la imagen al servidor. Intenta usar una URL externa.",
     "uploadError": "Error al subir la imagen ({status})",
     "genericError": "Error al subir la imagen",
     "uploadSuccess": "Imagen subida",
@@ -369,7 +372,9 @@
     "storageNotConfigured": "El almacenamiento no esta configurado",
     "storageUrlNotConfigured": "URL de almacenamiento no configurada",
     "noteTooLong": "La nota no puede exceder 5000 caracteres",
-    "tagNameInvalid": "El nombre del tag debe tener entre 1 y 50 caracteres",
+    "tagNameInvalid": "Solo letras, numeros y espacios",
+    "tagNameTooShort": "El nombre del tag debe tener al menos 3 caracteres",
+    "cannotDeleteDefaultTag": "No se pueden eliminar tags predeterminados",
     "invalidSlug": "El slug solo puede contener letras minusculas, numeros y guiones",
     "invalidFileExtension": "Extension de archivo no permitida. Usa JPG, PNG, WEBP o GIF",
     "duplicateTag": "Este tag ya existe",
