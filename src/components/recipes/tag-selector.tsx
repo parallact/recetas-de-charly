@@ -225,6 +225,7 @@ export function TagSelector({
       {allowCreate && (
         <div>
           {showInput ? (
+            <div className="space-y-1">
             <div className="flex gap-2">
               <Input
                 value={newTagName}
@@ -232,6 +233,7 @@ export function TagSelector({
                 onKeyDown={handleKeyDown}
                 placeholder={t('tagNamePlaceholder')}
                 className="h-8 text-sm"
+                maxLength={25}
                 autoFocus
               />
               <Button
@@ -257,6 +259,8 @@ export function TagSelector({
               >
                 {tc('cancel')}
               </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">3-25 caracteres, letras y numeros</p>
             </div>
           ) : (
             <Button
