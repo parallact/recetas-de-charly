@@ -26,7 +26,9 @@ export async function uploadFile(
   }
 
   const file = formData.get('file') as File | null
-  const folder = (formData.get('folder') as string) || 'recipes'
+  const rawFolder = (formData.get('folder') as string) || 'recipes'
+  const ALLOWED_FOLDERS = ['recipes', 'avatars', 'profiles']
+  const folder = ALLOWED_FOLDERS.includes(rawFolder) ? rawFolder : 'recipes'
 
   if (!file) {
     return { success: false, error: 'noFileProvided' }

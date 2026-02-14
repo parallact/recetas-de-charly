@@ -77,7 +77,7 @@ export async function registerUser(
 
     const cleanPassword = password.trim()
 
-    if (cleanPassword.length > 128) {
+    if (cleanPassword.length > 72) {
       return { success: false, error: 'passwordTooLong' }
     }
 
