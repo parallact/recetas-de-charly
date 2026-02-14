@@ -52,13 +52,17 @@ export function TagSelector({
 
   useEffect(() => {
     async function loadTags() {
-      const result = await getAllTags()
+      try {
+        const result = await getAllTags()
 
-      if (result.success) {
-        setTags(result.data)
+        if (result.success) {
+          setTags(result.data)
+        }
+      } catch {
+        // Server action failed (network/500 error)
+      } finally {
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     }
 
     loadTags()

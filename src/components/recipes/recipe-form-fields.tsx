@@ -59,8 +59,12 @@ export function RecipeFormFields({
 
   useEffect(() => {
     async function loadCategories() {
-      const data = await getAllCategories()
-      setCategories(data)
+      try {
+        const data = await getAllCategories()
+        setCategories(data)
+      } catch {
+        // Server action failed (network/500 error)
+      }
     }
     loadCategories()
   }, [])
