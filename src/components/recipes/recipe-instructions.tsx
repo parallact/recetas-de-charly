@@ -13,6 +13,8 @@ import { Plus, Trash2 } from 'lucide-react'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import { useTranslations } from 'next-intl'
 
+const MAX_INSTRUCTIONS = 30
+
 interface RecipeInstructionsProps {
   form: UseFormReturn<RecipeFormData>
 }
@@ -36,15 +38,19 @@ export function RecipeInstructions({ form }: RecipeInstructionsProps) {
           <span className="w-1 h-5 rounded-full bg-primary" />
           {t('instructionsTitle')}
         </h3>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => appendInstruction({ content: '' })}
-        >
-          <Plus className="h-4 w-4 mr-1" />
-          {t('addStep')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{instructionFields.length}/{MAX_INSTRUCTIONS}</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => appendInstruction({ content: '' })}
+            disabled={instructionFields.length >= MAX_INSTRUCTIONS}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {t('addStep')}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">

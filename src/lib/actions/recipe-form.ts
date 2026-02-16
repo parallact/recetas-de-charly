@@ -17,7 +17,7 @@ const instructionInputSchema = z.object({
 })
 
 const recipeInputSchema = z.object({
-  title: z.string().min(1).max(100).trim(),
+  title: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/),
   slug: z.string().min(1).max(200),
   description: z.string().max(500).nullable(),
   image_url: z.union([z.string().url(), z.literal(''), z.null()]),
@@ -27,7 +27,7 @@ const recipeInputSchema = z.object({
   difficulty: z.string().min(1).max(20),
   is_public: z.boolean(),
   ingredients: z.array(ingredientInputSchema).min(1).max(25),
-  instructions: z.array(instructionInputSchema).min(1),
+  instructions: z.array(instructionInputSchema).min(1).max(30),
   category_ids: z.array(z.string()).max(3),
   tag_ids: z.array(z.string()).max(7),
 })

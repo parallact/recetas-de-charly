@@ -142,6 +142,7 @@ export function RecipeFormFields({
                     type="number"
                     min="0"
                     max="1440"
+                    maxLength={4}
                     placeholder="15"
                     onKeyDown={blockInvalidNumberKeys}
                     {...field}
@@ -163,6 +164,7 @@ export function RecipeFormFields({
                     type="number"
                     min="0"
                     max="1440"
+                    maxLength={4}
                     placeholder="30"
                     onKeyDown={blockInvalidNumberKeys}
                     {...field}
@@ -184,6 +186,7 @@ export function RecipeFormFields({
                     type="number"
                     min="1"
                     max="50"
+                    maxLength={2}
                     placeholder="4"
                     onKeyDown={blockInvalidNumberKeys}
                     {...field}

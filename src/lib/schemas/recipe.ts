@@ -19,7 +19,7 @@ export const instructionSchema = z.object({
 })
 
 export const recipeSchema = z.object({
-  title: z.string().min(3, 'Minimo 3 caracteres').max(100, 'Maximo 100 caracteres'),
+  title: z.string().min(3, 'Minimo 3 caracteres').max(100, 'Maximo 100 caracteres').regex(/^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/, 'Solo letras, numeros, espacios y puntuacion basica'),
   description: z.string().max(500, 'Maximo 500 caracteres').optional().or(z.literal('')),
   imageUrl: z.string().url('URL no valida').optional().or(z.literal('')),
   prepTime: positiveNumberString,
@@ -27,7 +27,7 @@ export const recipeSchema = z.object({
   servings: z.coerce.number().min(1, 'Minimo 1 porcion').max(50, 'Maximo 50 porciones'),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   ingredients: z.array(ingredientSchema).min(1, 'Agrega al menos un ingrediente').max(25, 'Maximo 25 ingredientes'),
-  instructions: z.array(instructionSchema).min(1, 'Agrega al menos un paso'),
+  instructions: z.array(instructionSchema).min(1, 'Agrega al menos un paso').max(30, 'Maximo 30 pasos'),
   categoryIds: z.array(z.string()).max(3, 'Maximo 3 categorias').optional(),
 })
 
