@@ -115,21 +115,20 @@ async function createRecipeTags(
 // --- Public actions ---
 
 export async function createRecipe(input: RecipeFormInput) {
-  const { user, error } = await requireAuth()
-  if (!user) {
-    console.error('[createRecipe] Auth failed:', error)
-    return { success: false, error, recipeId: null }
-  }
-
-  const parsed = recipeInputSchema.safeParse(input)
-  if (!parsed.success) {
-    console.error('[createRecipe] Validation failed:', JSON.stringify(parsed.error.issues))
-    return { success: false, error: 'invalidRecipeData', recipeId: null }
-  }
-
-  const data = parsed.data
-
   try {
+    const { user, error } = await requireAuth()
+    if (!user) {
+      return { success: false, error, recipeId: null }
+    }
+
+    const parsed = recipeInputSchema.safeParse(input)
+    if (!parsed.success) {
+      console.error('[createRecipe] Validation failed:', JSON.stringify(parsed.error.issues))
+      return { success: false, error: 'invalidRecipeData', recipeId: null }
+    }
+
+    const data = parsed.data
+
     const recipeId = await prisma.$transaction(async (tx) => {
       const recipe = await tx.recipes.create({
         data: {
@@ -167,19 +166,19 @@ export async function createRecipe(input: RecipeFormInput) {
 }
 
 export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
-  const { user, error } = await requireAuth()
-  if (!user) {
-    return { success: false, error }
-  }
-
-  const parsed = recipeInputSchema.safeParse(input)
-  if (!parsed.success) {
-    return { success: false, error: 'invalidRecipeData' }
-  }
-
-  const data = parsed.data
-
   try {
+    const { user, error } = await requireAuth()
+    if (!user) {
+      return { success: false, error }
+    }
+
+    const parsed = recipeInputSchema.safeParse(input)
+    if (!parsed.success) {
+      return { success: false, error: 'invalidRecipeData' }
+    }
+
+    const data = parsed.data
+
     const existingRecipe = await prisma.recipes.findUnique({
       where: { id: recipeId },
       select: { user_id: true }
