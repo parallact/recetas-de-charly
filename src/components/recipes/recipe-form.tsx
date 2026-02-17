@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { recipeSchema, generateSlug, type RecipeFormData } from '@/lib/schemas/recipe'
 import { RecipeFormFields } from './recipe-form-fields'
-import { createRecipe, updateRecipe } from '@/lib/actions/recipe-form'
+// Use API routes instead of server actions (server action re-render causes RSC errors)
 import { useTranslations } from 'next-intl'
 
 interface TagData {
@@ -192,7 +192,12 @@ export function RecipeForm({
       }
 
       if (mode === 'create') {
-        const result = await createRecipe(formInput)
+        const resp = await fetch('/api/recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formInput),
+        })
+        const result = await resp.json()
 
         if (!result.success) {
           toast.error(result.error ? te(result.error) : t('createError'))
@@ -207,7 +212,12 @@ export function RecipeForm({
           return
         }
 
-        const result = await updateRecipe(recipeId, formInput)
+        const resp = await fetch(`/api/recipes/${recipeId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formInput),
+        })
+        const result = await resp.json()
 
         if (!result.success) {
           toast.error(result.error ? te(result.error) : t('updateError'))
