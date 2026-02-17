@@ -19,6 +19,7 @@ export async function getAllCategories() {
       created_at: cat.created_at,
     }))
   } catch (err) {
+    console.error('[getAllCategories] FULL ERROR:', JSON.stringify(err, Object.getOwnPropertyNames(err as object)))
     handleActionError(err, 'getAllCategories')
     return []
   }

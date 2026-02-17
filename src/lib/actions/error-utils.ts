@@ -24,10 +24,7 @@ export function handleActionError(error: unknown, context: string): string {
     }
   }
 
-  // Only log in development
-  if (process.env.NODE_ENV === 'development') {
-    console.error(`Error in ${context}:`, error)
-  }
+  console.error(`[ServerAction] Error in ${context}:`, error)
 
   return 'serverError'
 }
