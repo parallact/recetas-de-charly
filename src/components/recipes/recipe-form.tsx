@@ -16,6 +16,13 @@ import { RecipeFormFields } from './recipe-form-fields'
 import { createRecipe, updateRecipe } from '@/lib/actions/recipe-form'
 import { useTranslations } from 'next-intl'
 
+interface TagData {
+  id: string
+  name: string
+  slug: string
+  is_default?: boolean
+}
+
 interface RecipeFormProps {
   mode: 'create' | 'edit'
   recipeId?: string
@@ -23,6 +30,8 @@ interface RecipeFormProps {
   initialCategories?: string[]
   initialTags?: string[]
   backUrl?: string
+  serverCategories?: import('@/lib/types').Category[]
+  serverTags?: TagData[]
 }
 
 const defaultFormValues: RecipeFormData = {
@@ -45,6 +54,8 @@ export function RecipeForm({
   initialCategories = [],
   initialTags = [],
   backUrl = '/recipes',
+  serverCategories,
+  serverTags,
 }: RecipeFormProps) {
   const router = useRouter()
   const { data: session, status } = useSession()
@@ -251,6 +262,8 @@ export function RecipeForm({
                 onToggleCategory={toggleCategory}
                 selectedTags={selectedTags}
                 onTagsChange={setSelectedTags}
+                serverCategories={serverCategories}
+                serverTags={serverTags}
               />
 
               {/* Submit */}

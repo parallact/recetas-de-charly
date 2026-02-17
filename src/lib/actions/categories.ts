@@ -10,16 +10,8 @@ export async function getAllCategories() {
       orderBy: { name: 'asc' },
     })
 
-    return categories.map(cat => ({
-      id: cat.id,
-      name: cat.name,
-      slug: cat.slug,
-      icon: cat.icon,
-      description: cat.description,
-      created_at: cat.created_at,
-    }))
+    return categories
   } catch (err) {
-    console.error('[getAllCategories] FULL ERROR:', JSON.stringify(err, Object.getOwnPropertyNames(err as object)))
     handleActionError(err, 'getAllCategories')
     return []
   }

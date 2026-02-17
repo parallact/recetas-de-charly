@@ -33,12 +33,21 @@ function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
   }
 }
 
+interface TagData {
+  id: string
+  name: string
+  slug: string
+  is_default?: boolean
+}
+
 interface RecipeFormFieldsProps {
   form: UseFormReturn<RecipeFormData>
   selectedCategories: string[]
   onToggleCategory: (categoryId: string) => void
   selectedTags?: string[]
   onTagsChange?: (tagIds: string[]) => void
+  serverCategories?: Category[]
+  serverTags?: TagData[]
 }
 
 export function RecipeFormFields({
@@ -47,8 +56,10 @@ export function RecipeFormFields({
   onToggleCategory,
   selectedTags = [],
   onTagsChange,
+  serverCategories,
+  serverTags,
 }: RecipeFormFieldsProps) {
-  const [categories, setCategories] = useState<Category[]>([])
+  const [categories, setCategories] = useState<Category[]>(serverCategories || [])
   const t = useTranslations('recipeForm')
   const td = useTranslations('difficulty')
   const tcat = useTranslations('categoryNames')
@@ -57,7 +68,9 @@ export function RecipeFormFields({
   const cookingTime = form.watch('cookingTime')
   const totalTime = (parseInt(prepTime || '0') || 0) + (parseInt(cookingTime || '0') || 0)
 
+  // Only fetch from server action if no server-provided categories
   useEffect(() => {
+    if (serverCategories && serverCategories.length > 0) return
     async function loadCategories() {
       try {
         const data = await getAllCategories()
@@ -67,7 +80,7 @@ export function RecipeFormFields({
       }
     }
     loadCategories()
-  }, [])
+  }, [serverCategories])
 
   return (
     <div className="space-y-8">
@@ -273,6 +286,7 @@ export function RecipeFormFields({
               selectedTags={selectedTags}
               onTagsChange={onTagsChange}
               allowCreate
+              serverTags={serverTags}
             />
           </div>
         </>

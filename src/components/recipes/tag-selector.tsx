@@ -24,6 +24,7 @@ interface TagSelectorProps {
   onTagsChange: (tagIds: string[]) => void
   allowCreate?: boolean
   className?: string
+  serverTags?: TagData[]
 }
 
 function generateSlug(name: string): string {
@@ -40,9 +41,10 @@ export function TagSelector({
   onTagsChange,
   allowCreate = true,
   className,
+  serverTags,
 }: TagSelectorProps) {
-  const [tags, setTags] = useState<TagData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [tags, setTags] = useState<TagData[]>(serverTags || [])
+  const [isLoading, setIsLoading] = useState(!serverTags || serverTags.length === 0)
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showInput, setShowInput] = useState(false)
@@ -50,7 +52,9 @@ export function TagSelector({
   const tc = useTranslations('common')
   const te = useTranslations('serverErrors')
 
+  // Only fetch from server action if no server-provided tags
   useEffect(() => {
+    if (serverTags && serverTags.length > 0) return
     async function loadTags() {
       try {
         const result = await getAllTags()
@@ -66,7 +70,7 @@ export function TagSelector({
     }
 
     loadTags()
-  }, [])
+  }, [serverTags])
 
   const toggleTag = useCallback((tagId: string) => {
     if (selectedTags.includes(tagId)) {

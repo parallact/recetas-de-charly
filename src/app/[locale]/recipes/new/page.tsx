@@ -1,29 +1,44 @@
-'use client'
+import { prisma } from '@/lib/prisma'
+import { NewRecipeClient } from './new-recipe-client'
+import type { Category } from '@/lib/types'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-import { useSession } from 'next-auth/react'
-import { RecipeForm } from '@/components/recipes/recipe-form'
-import { useTranslations } from 'next-intl'
+interface TagData {
+  id: string
+  name: string
+  slug: string
+  is_default: boolean
+}
 
-export default function NewRecipePage() {
-  const router = useRouter()
-  const { data: session, status } = useSession()
-  const ta = useTranslations('auth')
-
-  useEffect(() => {
-    if (status === 'loading') return
-
-    if (!session?.user) {
-      toast.error(ta('loginToCreateRecipe'))
-      router.push('/login')
-    }
-  }, [session, status, router, ta])
-
-  if (status === 'loading' || !session?.user) {
-    return null
+async function getCategories(): Promise<Category[]> {
+  try {
+    const categories = await prisma.categories.findMany({
+      orderBy: { name: 'asc' },
+    })
+    return categories as Category[]
+  } catch {
+    return []
   }
+}
 
-  return <RecipeForm mode="create" backUrl="/recipes" />
+async function getDefaultTags(): Promise<TagData[]> {
+  try {
+    const tags = await prisma.tags.findMany({
+      orderBy: [{ is_default: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        is_default: true,
+      },
+    })
+    return tags
+  } catch {
+    return []
+  }
+}
+
+export default async function NewRecipePage() {
+  const [categories, tags] = await Promise.all([getCategories(), getDefaultTags()])
+
+  return <NewRecipeClient categories={categories} tags={tags} />
 }

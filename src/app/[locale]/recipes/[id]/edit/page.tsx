@@ -1,140 +1,87 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { auth } from '@/auth'
+import { prisma } from '@/lib/prisma'
+import { EditRecipeClient } from './edit-recipe-client'
+import type { Category } from '@/lib/types'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from 'sonner'
-import { useSession } from 'next-auth/react'
-import { INGREDIENT_UNITS } from '@/lib/constants'
-import { RecipeForm } from '@/components/recipes/recipe-form'
-import { getRecipeForEdit } from '@/lib/actions/recipes'
-import type { RecipeFormData } from '@/lib/schemas/recipe'
-import { useTranslations } from 'next-intl'
+interface TagData {
+  id: string
+  name: string
+  slug: string
+  is_default: boolean
+}
 
-export default function EditRecipePage() {
-  const router = useRouter()
-  const params = useParams()
-  const recipeId = params.id as string
-  const { data: session, status } = useSession()
-  const ta = useTranslations('auth')
-  const te = useTranslations('serverErrors')
+async function getCategories(): Promise<Category[]> {
+  try {
+    const categories = await prisma.categories.findMany({
+      orderBy: { name: 'asc' },
+    })
+    return categories as Category[]
+  } catch {
+    return []
+  }
+}
 
-  const [initialLoading, setInitialLoading] = useState(true)
-  const [initialData, setInitialData] = useState<RecipeFormData | null>(null)
-  const [initialCategories, setInitialCategories] = useState<string[]>([])
-  const [initialTags, setInitialTags] = useState<string[]>([])
+async function getAllTags(): Promise<TagData[]> {
+  try {
+    const tags = await prisma.tags.findMany({
+      orderBy: [{ is_default: 'desc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        is_default: true,
+      },
+    })
+    return tags
+  } catch {
+    return []
+  }
+}
 
-  useEffect(() => {
-    async function loadRecipeData() {
-      if (status === 'loading') return
+interface EditRecipePageProps {
+  params: Promise<{ id: string }>
+}
 
-      if (!session?.user) {
-        toast.error(ta('loginToEditRecipe'))
-        router.push('/login')
-        return
-      }
+export default async function EditRecipePage({ params }: EditRecipePageProps) {
+  const { id: recipeId } = await params
+  const session = await auth()
 
-      if (!recipeId) return
-
-      const result = await getRecipeForEdit(recipeId)
-
-      if (!result.success || !result.data) {
-        toast.error(result.error ? te(result.error) : te('recipeNotFound'))
-        router.push('/my-recipes')
-        return
-      }
-
-      const recipe = result.data
-
-      // Process ingredients
-      const ingredients = (recipe.recipe_ingredients || []).map((ri) => {
-        const isCustomUnit = ri.unit && !INGREDIENT_UNITS.find(u => u.value === ri.unit)
-        return {
-          name: ri.ingredients?.name || '',
-          quantity: ri.quantity?.toString() || '',
-          unit: isCustomUnit ? 'otro' : (ri.unit || ''),
-          customUnit: isCustomUnit ? (ri.unit || '') : '',
-        }
-      })
-
-      // Process instructions
-      const instructions = (recipe.instructions || []).map((inst) => ({
-        content: inst.content || '',
-      }))
-
-      // Set initial data
-      setInitialData({
-        title: recipe.title,
-        description: recipe.description || '',
-        imageUrl: recipe.image_url || '',
-        prepTime: recipe.prep_time?.toString() || '',
-        cookingTime: recipe.cooking_time?.toString() || '',
-        servings: recipe.servings || 4,
-        difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard' | undefined,
-        ingredients: ingredients.length > 0 ? ingredients : [{ name: '', quantity: '', unit: '', customUnit: '' }],
-        instructions: instructions.length > 0 ? instructions : [{ content: '' }],
-        categoryIds: [],
-      })
-
-      // Set categories
-      const categoryIds = (recipe.recipe_categories || []).map((rc) => rc.category_id)
-      setInitialCategories(categoryIds)
-
-      // Set tags
-      const tagIds = (recipe.recipe_tags || []).map((rt) => rt.tag_id)
-      setInitialTags(tagIds)
-
-      setInitialLoading(false)
-    }
-
-    loadRecipeData()
-  }, [session, status, recipeId, router, ta])
-
-  if (initialLoading) {
-    return (
-      <div className="container mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6">
-          <Skeleton className="h-9 w-36" />
-        </div>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-4 w-48" />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-40 w-full" />
-            <div className="grid grid-cols-4 gap-4">
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-              <Skeleton className="h-10" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  if (!session?.user?.id) {
+    redirect('/login')
   }
 
-  if (!initialData) {
-    return null
+  const [recipe, categories, tags] = await Promise.all([
+    prisma.recipes.findFirst({
+      where: {
+        id: recipeId,
+        user_id: session.user.id,
+      },
+      include: {
+        recipe_ingredients: {
+          include: { ingredients: true },
+          orderBy: { order_index: 'asc' },
+        },
+        instructions: {
+          orderBy: { step_number: 'asc' },
+        },
+        recipe_categories: true,
+        recipe_tags: true,
+      },
+    }).catch(() => null),
+    getCategories(),
+    getAllTags(),
+  ])
+
+  if (!recipe) {
+    redirect('/my-recipes')
   }
 
   return (
-    <RecipeForm
-      mode="edit"
-      recipeId={recipeId}
-      initialData={initialData}
-      initialCategories={initialCategories}
-      initialTags={initialTags}
-      backUrl="/my-recipes"
+    <EditRecipeClient
+      recipe={JSON.parse(JSON.stringify(recipe))}
+      categories={categories}
+      tags={tags}
     />
   )
 }
