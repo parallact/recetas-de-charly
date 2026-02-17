@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,7 +18,6 @@ import { ImageUpload } from '@/components/ui/image-upload'
 import { TagSelector } from './tag-selector'
 import { RecipeIngredients } from './recipe-ingredients'
 import { RecipeInstructions } from './recipe-instructions'
-import { getAllCategories } from '@/lib/actions/categories'
 import type { RecipeFormData } from '@/lib/schemas/recipe'
 import type { Category } from '@/lib/types'
 import { useTranslations } from 'next-intl'
@@ -59,7 +57,7 @@ export function RecipeFormFields({
   serverCategories,
   serverTags,
 }: RecipeFormFieldsProps) {
-  const [categories, setCategories] = useState<Category[]>(serverCategories || [])
+  const categories = serverCategories || []
   const t = useTranslations('recipeForm')
   const td = useTranslations('difficulty')
   const tcat = useTranslations('categoryNames')
@@ -68,19 +66,7 @@ export function RecipeFormFields({
   const cookingTime = form.watch('cookingTime')
   const totalTime = (parseInt(prepTime || '0') || 0) + (parseInt(cookingTime || '0') || 0)
 
-  // Only fetch from server action if no server-provided categories
-  useEffect(() => {
-    if (serverCategories && serverCategories.length > 0) return
-    async function loadCategories() {
-      try {
-        const data = await getAllCategories()
-        setCategories(data)
-      } catch {
-        // Server action failed (network/500 error)
-      }
-    }
-    loadCategories()
-  }, [serverCategories])
+  // Categories are loaded from server via Server Component props
 
   return (
     <div className="space-y-8">

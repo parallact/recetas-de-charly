@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { X, Plus, Tag, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { getAllTags, createTag, deleteTag } from '@/lib/actions/tags'
+// Use API routes instead of server actions (server action re-render causes RSC errors)
 import { useTranslations } from 'next-intl'
 
 interface TagData {
@@ -52,24 +52,13 @@ export function TagSelector({
   const tc = useTranslations('common')
   const te = useTranslations('serverErrors')
 
-  // Only fetch from server action if no server-provided tags
+  // Tags are loaded from server via Server Component props
   useEffect(() => {
-    if (serverTags && serverTags.length > 0) return
-    async function loadTags() {
-      try {
-        const result = await getAllTags()
-
-        if (result.success) {
-          setTags(result.data)
-        }
-      } catch {
-        // Server action failed (network/500 error)
-      } finally {
-        setIsLoading(false)
-      }
+    if (serverTags && serverTags.length > 0) {
+      setIsLoading(false)
+    } else {
+      setIsLoading(false)
     }
-
-    loadTags()
   }, [serverTags])
 
   const toggleTag = useCallback((tagId: string) => {
@@ -112,30 +101,44 @@ export function TagSelector({
 
     setIsCreating(true)
 
-    const result = await createTag(trimmedName, slug)
+    try {
+      const resp = await fetch('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmedName, slug }),
+      })
+      const result = await resp.json()
 
-    if (!result.success) {
-      toast.error(result.error ? te(result.error) : t('createError'))
-    } else if (result.data) {
-      setTags(prev => [...prev, result.data!].sort((a, b) => a.name.localeCompare(b.name)))
-      onTagsChange([...selectedTags, result.data.id])
-      setNewTagName('')
-      setShowInput(false)
-      toast.success(t('tagCreated'))
+      if (!result.success) {
+        toast.error(result.error ? te(result.error) : t('createError'))
+      } else if (result.data) {
+        setTags(prev => [...prev, result.data].sort((a: TagData, b: TagData) => a.name.localeCompare(b.name)))
+        onTagsChange([...selectedTags, result.data.id])
+        setNewTagName('')
+        setShowInput(false)
+        toast.success(t('tagCreated'))
+      }
+    } catch {
+      toast.error(t('createError'))
     }
 
     setIsCreating(false)
   }
 
   const handleDeleteTag = async (tagId: string) => {
-    const result = await deleteTag(tagId)
-    if (!result.success) {
-      toast.error(result.error ? te(result.error) : t('createError'))
-      return
+    try {
+      const resp = await fetch(`/api/tags/${tagId}`, { method: 'DELETE' })
+      const result = await resp.json()
+      if (!result.success) {
+        toast.error(result.error ? te(result.error) : t('createError'))
+        return
+      }
+      setTags(prev => prev.filter(t => t.id !== tagId))
+      onTagsChange(selectedTags.filter(id => id !== tagId))
+      toast.success(t('tagDeleted'))
+    } catch {
+      toast.error(t('createError'))
     }
-    setTags(prev => prev.filter(t => t.id !== tagId))
-    onTagsChange(selectedTags.filter(id => id !== tagId))
-    toast.success(t('tagDeleted'))
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
