@@ -123,7 +123,6 @@ export async function createRecipe(input: RecipeFormInput) {
 
     const parsed = recipeInputSchema.safeParse(input)
     if (!parsed.success) {
-      console.error('[createRecipe] Validation failed:', JSON.stringify(parsed.error.issues))
       return { success: false, error: 'invalidRecipeData', recipeId: null }
     }
 

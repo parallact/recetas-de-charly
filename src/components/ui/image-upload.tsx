@@ -8,7 +8,7 @@ import { X, Image as ImageIcon, Loader2, Link as LinkIcon, Upload, CheckCircle2 
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
-import { uploadFile } from '@/lib/actions/storage'
+// Use API route instead of server action (server action re-render causes RSC errors)
 import { cn } from '@/lib/utils'
 
 interface ImageUploadProps {
@@ -114,12 +114,16 @@ export function ImageUpload({
       progressIntervalRef.current = setInterval(simulateProgress, 150)
 
       try {
-        // Upload via server action (avoids CORS issues with R2)
+        // Upload via API route (avoids RSC re-render issues with server actions)
         const formData = new FormData()
         formData.append('file', file)
         formData.append('folder', folder)
 
-        const result = await uploadFile(formData)
+        const resp = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        const result = await resp.json()
 
         if (!result.success || !result.publicUrl) {
           throw new Error(result.error ? te(result.error) : t('genericError'))
