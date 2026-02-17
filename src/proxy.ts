@@ -13,6 +13,13 @@ function isProtectedPath(pathname: string): boolean {
 }
 
 export default function middleware(request: NextRequest) {
+  // Skip intl middleware for server actions (POST with Next-Action header)
+  // to prevent next-intl from interfering with server action responses
+  const isServerAction = request.method === 'POST' && request.headers.has('Next-Action')
+  if (isServerAction) {
+    return NextResponse.next()
+  }
+
   if (isProtectedPath(request.nextUrl.pathname)) {
     const sessionToken = request.cookies.get('authjs.session-token') ||
                           request.cookies.get('__Secure-authjs.session-token')
