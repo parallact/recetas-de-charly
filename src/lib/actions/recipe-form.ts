@@ -117,11 +117,13 @@ async function createRecipeTags(
 export async function createRecipe(input: RecipeFormInput) {
   const { user, error } = await requireAuth()
   if (!user) {
+    console.error('[createRecipe] Auth failed:', error)
     return { success: false, error, recipeId: null }
   }
 
   const parsed = recipeInputSchema.safeParse(input)
   if (!parsed.success) {
+    console.error('[createRecipe] Validation failed:', JSON.stringify(parsed.error.issues))
     return { success: false, error: 'invalidRecipeData', recipeId: null }
   }
 
