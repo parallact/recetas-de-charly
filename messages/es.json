@@ -286,6 +286,22 @@
     "deleteError": "Error al eliminar la nota",
     "noNotes": "No tienes notas para esta receta"
   },
+  "comments": {
+    "title": "Comentarios",
+    "titleWithCount": "Comentarios ({count})",
+    "placeholder": "Escribi tu comentario...",
+    "publish": "Publicar",
+    "delete": "Eliminar",
+    "deleteConfirm": "Seguro que queres eliminar este comentario?",
+    "loginToComment": "Inicia sesion para comentar",
+    "noComments": "Todavia no hay comentarios. Se el primero!",
+    "commentAdded": "Comentario publicado",
+    "commentDeleted": "Comentario eliminado",
+    "addError": "Error al publicar el comentario",
+    "deleteError": "Error al eliminar el comentario",
+    "minLength": "Minimo 10 caracteres",
+    "charCount": "{count}/500"
+  },
   "tags": {
     "loadingTags": "Cargando tags...",
     "tagNamePlaceholder": "Nombre del tag...",

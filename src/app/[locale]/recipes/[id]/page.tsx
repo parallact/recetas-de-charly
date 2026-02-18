@@ -16,6 +16,7 @@ import { LikeButton } from '@/components/recipes/like-button'
 import { ServingsScaler } from '@/components/recipes/servings-scaler'
 import { CookingMode } from '@/components/recipes/cooking-mode'
 import { RecipeNotes } from '@/components/recipes/recipe-notes'
+import { RecipeComments } from '@/components/recipes/recipe-comments'
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth/get-user'
 import { DIFFICULTY_COLORS } from '@/lib/constants'
@@ -321,6 +322,11 @@ export default async function RecipeDetailPage({
             {/* Personal Notes */}
             <div className="pt-4">
               <RecipeNotes recipeId={recipe.id} />
+            </div>
+
+            {/* Comments */}
+            <div className="pt-4">
+              <RecipeComments recipeId={recipe.id} userId={user?.id ?? null} />
             </div>
           </div>
 

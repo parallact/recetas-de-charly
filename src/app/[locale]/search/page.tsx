@@ -38,6 +38,7 @@ interface SearchRecipe {
   prep_time: number | null
   servings: number | null
   difficulty: string | null
+  likes_count: number
   recipe_tags?: { tags: { name: string; slug: string } | null }[]
 }
 
@@ -144,7 +145,8 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
           difficulty: true,
           recipe_tags: {
             include: { tags: { select: { name: true, slug: true } } }
-          }
+          },
+          _count: { select: { recipe_likes: true } }
         },
         orderBy: { created_at: 'desc' },
         skip,
@@ -155,8 +157,13 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
 
     const totalPages = Math.ceil(totalCount / RECIPES_PER_PAGE)
 
+    const formattedRecipes = recipes.map(recipe => ({
+      ...recipe,
+      likes_count: recipe._count.recipe_likes,
+    }))
+
     return {
-      recipes: recipes as SearchRecipe[],
+      recipes: formattedRecipes as SearchRecipe[],
       categories,
       tags,
       totalCount,

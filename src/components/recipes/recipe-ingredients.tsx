@@ -24,6 +24,24 @@ function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
   }
 }
 
+/** Clamp numeric input value to max digits and max value */
+function clampNumericInput(e: React.FormEvent<HTMLInputElement>, maxDigits: number, maxValue: number) {
+  const input = e.currentTarget
+  if (input.value.length > maxDigits) {
+    input.value = input.value.slice(0, maxDigits)
+  }
+  const num = Number(input.value)
+  if (num > maxValue) {
+    input.value = String(maxValue)
+  }
+}
+
+/** Filter out characters that don't match letters and spaces */
+function filterLettersOnly(e: React.FormEvent<HTMLInputElement>) {
+  const input = e.currentTarget
+  input.value = input.value.replace(/[^A-Za-zÀ-ÿñÑ\s]/g, '')
+}
+
 interface RecipeIngredientsProps {
   form: UseFormReturn<RecipeFormData>
 }
@@ -77,7 +95,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} {...field} />
+                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} onInput={filterLettersOnly} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -103,7 +121,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="w-20">
                       <FormControl>
-                        <Input type="number" inputMode="decimal" step="any" min="0" onKeyDown={blockInvalidNumberKeys} placeholder={t('quantity')} {...field} />
+                        <Input type="number" inputMode="decimal" step="any" min="0" max="9999" onKeyDown={blockInvalidNumberKeys} onInput={(e) => clampNumericInput(e, 4, 9999)} placeholder={t('quantity')} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -155,7 +173,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="w-20">
                       <FormControl>
-                        <Input type="number" inputMode="decimal" step="any" min="0" onKeyDown={blockInvalidNumberKeys} placeholder={t('quantity')} {...field} />
+                        <Input type="number" inputMode="decimal" step="any" min="0" max="9999" onKeyDown={blockInvalidNumberKeys} onInput={(e) => clampNumericInput(e, 4, 9999)} placeholder={t('quantity')} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -204,7 +222,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                   render={({ field }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} {...field} />
+                        <Input placeholder={t('ingredientPlaceholder', { index: index + 1 })} maxLength={100} onInput={filterLettersOnly} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

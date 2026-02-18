@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { StickyNote, Plus, Pencil, Trash2, Loader2, Lock, Globe } from 'lucide-react'
+import { StickyNote, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import { getRecipeNotes, addRecipeNote, updateRecipeNote, deleteRecipeNote } from '@/lib/actions/notes'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -27,7 +26,6 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
   const [userId, setUserId] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const [newNote, setNewNote] = useState('')
-  const [isPrivate, setIsPrivate] = useState(true)
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
@@ -64,7 +62,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
 
     setSaving(true)
 
-    const result = await addRecipeNote(recipeId, newNote.trim(), isPrivate)
+    const result = await addRecipeNote(recipeId, newNote.trim())
 
     if (!result.success) {
       toast.error(result.error ? te(result.error) : t('saveError'))
@@ -151,27 +149,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                 rows={3}
                 className="resize-none"
               />
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsPrivate(!isPrivate)}
-                  className={cn(
-                    'flex items-center gap-1 text-xs',
-                    isPrivate ? 'text-muted-foreground' : 'text-primary'
-                  )}
-                >
-                  {isPrivate ? (
-                    <>
-                      <Lock className="h-3 w-3" />
-                      {t('private')}
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="h-3 w-3" />
-                      {t('public')}
-                    </>
-                  )}
-                </button>
+              <div className="flex items-center justify-end">
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
@@ -241,11 +219,6 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                       <p className="text-sm whitespace-pre-wrap">{note.content}</p>
                       <div className="flex items-center justify-between mt-2 pt-2 border-t border-muted">
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {note.is_private ? (
-                            <Lock className="h-3 w-3" />
-                          ) : (
-                            <Globe className="h-3 w-3" />
-                          )}
                           <span>
                             {new Date(note.created_at).toLocaleDateString(locale)}
                           </span>

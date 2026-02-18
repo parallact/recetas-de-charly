@@ -31,13 +31,15 @@ async function getFeaturedRecipes(): Promise<(Recipe & { likes_count: number })[
   try {
     const recipes = await prisma.recipes.findMany({
       where: { is_public: true },
+      include: {
+        _count: { select: { recipe_likes: true } }
+      },
       orderBy: { created_at: 'desc' },
       take: 6
     })
     return recipes.map(recipe => ({
       ...recipe,
-      likes_count: 0,
-      // Convert Decimal to number for servings
+      likes_count: recipe._count.recipe_likes,
       servings: recipe.servings ?? 4
     })) as (Recipe & { likes_count: number })[]
   } catch {

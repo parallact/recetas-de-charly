@@ -37,7 +37,7 @@ export async function getRecipeNotes(recipeId: string) {
 }
 
 // Add a note
-export async function addRecipeNote(recipeId: string, content: string, isPrivate: boolean = true) {
+export async function addRecipeNote(recipeId: string, content: string) {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error, data: null }
@@ -54,7 +54,7 @@ export async function addRecipeNote(recipeId: string, content: string, isPrivate
         user_id: user.id,
         recipe_id: recipeId,
         content: trimmed,
-        is_private: isPrivate,
+        is_private: true,
       }
     })
 

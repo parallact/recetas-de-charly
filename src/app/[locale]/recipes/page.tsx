@@ -55,7 +55,8 @@ async function getRecipes(categorySlug?: string, page = 1): Promise<PaginatedRes
         include: {
           users: {
             include: { profiles: true }
-          }
+          },
+          _count: { select: { recipe_likes: true } }
         },
         orderBy: { created_at: 'desc' },
         skip,
@@ -69,6 +70,7 @@ async function getRecipes(categorySlug?: string, page = 1): Promise<PaginatedRes
     // Transform to expected format
     const formattedRecipes = recipes.map(recipe => ({
       ...recipe,
+      likes_count: recipe._count.recipe_likes,
       profiles: recipe.users?.profiles
         ? { display_name: recipe.users.profiles.display_name }
         : null

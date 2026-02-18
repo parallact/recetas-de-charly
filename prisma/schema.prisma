@@ -115,6 +115,18 @@ model recipe_likes {
   @@index([recipe_id])
 }
 
+model recipe_comments {
+  id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  user_id    String    @db.Uuid
+  recipe_id  String    @db.Uuid
+  content    String
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  recipes    recipes   @relation(fields: [recipe_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([recipe_id])
+}
+
 model recipe_notes {
   id         String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   user_id    String?   @db.Uuid
@@ -162,6 +174,7 @@ model recipes {
   bookmarks          bookmarks[]
   instructions       instructions[]
   recipe_categories  recipe_categories[]
+  recipe_comments    recipe_comments[]
   recipe_ingredients recipe_ingredients[]
   recipe_likes       recipe_likes[]
   recipe_notes       recipe_notes[]
@@ -201,13 +214,14 @@ model users {
   email_verified DateTime?      @db.Timestamptz(6)
   created_at     DateTime?      @default(now()) @db.Timestamptz(6)
   updated_at     DateTime?      @default(now()) @db.Timestamptz(6)
-  accounts       accounts[]
-  bookmarks      bookmarks[]
-  profiles       profiles?
-  recipe_likes   recipe_likes[]
-  recipe_notes   recipe_notes[]
-  recipes        recipes[]
-  sessions       sessions[]
+  accounts        accounts[]
+  bookmarks       bookmarks[]
+  profiles        profiles?
+  recipe_comments recipe_comments[]
+  recipe_likes    recipe_likes[]
+  recipe_notes    recipe_notes[]
+  recipes         recipes[]
+  sessions        sessions[]
 }
 
 model verification_tokens {

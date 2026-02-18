@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 const ingredientInputSchema = z.object({
   name: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
-  quantity: z.number().min(0).nullable(),
+  quantity: z.number().min(0).max(9999).nullable(),
   unit: z.string().max(50).nullable(),
 })
 
@@ -21,7 +21,7 @@ const recipeInputSchema = z.object({
   image_url: z.union([z.string().url(), z.literal(''), z.null()]),
   prep_time: z.number().int().min(0).max(1440).nullable(),
   cooking_time: z.number().int().min(0).max(1440).nullable(),
-  servings: z.number().int().min(1).max(50),
+  servings: z.number().int().min(1).max(99),
   difficulty: z.string().min(1).max(20),
   is_public: z.boolean(),
   ingredients: z.array(ingredientInputSchema).min(1).max(25),

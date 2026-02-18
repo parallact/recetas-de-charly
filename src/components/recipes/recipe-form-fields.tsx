@@ -24,11 +24,29 @@ import { useTranslations } from 'next-intl'
 
 const MAX_CATEGORIES = 3
 
-/** Block "e", "E", "+", "-" in number inputs (HTML allows these for scientific notation) */
-function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
-  if (['e', 'E', '+', '-'].includes(e.key)) {
+/** Block "e", "E", "+", "-", "." in integer-only inputs */
+function blockNonIntegerKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
     e.preventDefault()
   }
+}
+
+/** Clamp numeric input value to max digits and max value */
+function clampNumericInput(e: React.FormEvent<HTMLInputElement>, maxDigits: number, maxValue: number) {
+  const input = e.currentTarget
+  if (input.value.length > maxDigits) {
+    input.value = input.value.slice(0, maxDigits)
+  }
+  const num = Number(input.value)
+  if (num > maxValue) {
+    input.value = String(maxValue)
+  }
+}
+
+/** Filter out characters that don't match the allowed pattern */
+function filterTitleInput(e: React.FormEvent<HTMLInputElement>) {
+  const input = e.currentTarget
+  input.value = input.value.replace(/[^A-Za-zÀ-ÿñÑ0-9\s,.\-()]/g, '')
 }
 
 interface TagData {
@@ -84,7 +102,7 @@ export function RecipeFormFields({
             <FormItem>
               <FormLabel>{t('title')}</FormLabel>
               <FormControl>
-                <Input placeholder={t('titlePlaceholder')} maxLength={100} {...field} />
+                <Input placeholder={t('titlePlaceholder')} maxLength={100} onInput={filterTitleInput} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -141,9 +159,9 @@ export function RecipeFormFields({
                     type="number"
                     min="0"
                     max="1440"
-                    maxLength={4}
                     placeholder="15"
-                    onKeyDown={blockInvalidNumberKeys}
+                    onKeyDown={blockNonIntegerKeys}
+                    onInput={(e) => clampNumericInput(e, 4, 1440)}
                     {...field}
                   />
                 </FormControl>
@@ -163,9 +181,9 @@ export function RecipeFormFields({
                     type="number"
                     min="0"
                     max="1440"
-                    maxLength={4}
                     placeholder="30"
-                    onKeyDown={blockInvalidNumberKeys}
+                    onKeyDown={blockNonIntegerKeys}
+                    onInput={(e) => clampNumericInput(e, 4, 1440)}
                     {...field}
                   />
                 </FormControl>
@@ -184,10 +202,10 @@ export function RecipeFormFields({
                   <Input
                     type="number"
                     min="1"
-                    max="50"
-                    maxLength={2}
+                    max="99"
                     placeholder="4"
-                    onKeyDown={blockInvalidNumberKeys}
+                    onKeyDown={blockNonIntegerKeys}
+                    onInput={(e) => clampNumericInput(e, 2, 99)}
                     {...field}
                   />
                 </FormControl>
