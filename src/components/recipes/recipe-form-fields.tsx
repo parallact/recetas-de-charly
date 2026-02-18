@@ -252,7 +252,7 @@ export function RecipeFormFields({
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-base flex items-center gap-2">
             <span className="w-1 h-5 rounded-full bg-accent" />
-            {t('categories')}
+            {t('categories')} <span className="text-destructive">*</span>
           </h3>
           <span className="text-xs text-muted-foreground">{selectedCategories.length}/{MAX_CATEGORIES}</span>
         </div>

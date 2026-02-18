@@ -158,6 +158,11 @@ export function RecipeForm({
       return
     }
 
+    if (selectedCategories.length === 0) {
+      toast.error(t('addCategoryError'))
+      return
+    }
+
     setLoading(true)
 
     try {

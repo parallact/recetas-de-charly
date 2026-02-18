@@ -42,7 +42,7 @@ export const recipeSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   ingredients: z.array(ingredientSchema).min(1, 'Agrega al menos un ingrediente').max(25, 'Maximo 25 ingredientes'),
   instructions: z.array(instructionSchema).min(1, 'Agrega al menos un paso').max(30, 'Maximo 30 pasos'),
-  categoryIds: z.array(z.string()).max(3, 'Maximo 3 categorias').optional(),
+  categoryIds: z.array(z.string()).min(1, 'Selecciona al menos una categoria').max(3, 'Maximo 3 categorias').optional(),
 })
 
 // Exported for use in form field filtering

@@ -26,7 +26,7 @@ const recipeInputSchema = z.object({
   is_public: z.boolean(),
   ingredients: z.array(ingredientInputSchema).min(1).max(25),
   instructions: z.array(instructionInputSchema).min(1).max(30),
-  category_ids: z.array(z.string()).max(3),
+  category_ids: z.array(z.string()).min(1).max(3),
   tag_ids: z.array(z.string()).max(7),
 })
 
