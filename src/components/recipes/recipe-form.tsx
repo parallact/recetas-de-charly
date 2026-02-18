@@ -90,8 +90,9 @@ export function RecipeForm({
     if (serialized !== prevCategoriesRef.current) {
       prevCategoriesRef.current = serialized
       setSelectedCategories(initialCategories)
+      form.setValue('categoryIds', initialCategories)
     }
-  }, [initialCategories])
+  }, [initialCategories, form])
 
   // Update tags when initialTags changes (proper deep comparison)
   useEffect(() => {
@@ -125,15 +126,19 @@ export function RecipeForm({
   const toggleCategory = useCallback((categoryId: string) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId)
+        const next = prev.filter(id => id !== categoryId)
+        form.setValue('categoryIds', next, { shouldValidate: true })
+        return next
       }
       if (prev.length >= 3) {
         toast.error(t('maxCategoriesReached'))
         return prev
       }
-      return [...prev, categoryId]
+      const next = [...prev, categoryId]
+      form.setValue('categoryIds', next, { shouldValidate: true })
+      return next
     })
-  }, [t])
+  }, [t, form])
 
   const onSubmit = async (data: RecipeFormData) => {
     if (status === 'loading') return
@@ -270,7 +275,11 @@ export function RecipeForm({
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const first = Object.values(errors)[0]
+              const msg = (first as { message?: string })?.message
+              if (msg) toast.error(msg)
+            })} className="space-y-8">
               <RecipeFormFields
                 form={form}
                 selectedCategories={selectedCategories}

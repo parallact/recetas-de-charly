@@ -22,7 +22,7 @@ const recipeInputSchema = z.object({
   prep_time: z.number().int().min(0).max(1440).nullable(),
   cooking_time: z.number().int().min(0).max(1440).nullable(),
   servings: z.number().int().min(1).max(99),
-  difficulty: z.string().min(1).max(20),
+  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   is_public: z.boolean(),
   ingredients: z.array(ingredientInputSchema).min(1).max(25),
   instructions: z.array(instructionInputSchema).min(1).max(30),
