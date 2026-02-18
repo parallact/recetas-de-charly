@@ -209,16 +209,16 @@
     "viewAllRecipes": "Ver todas las recetas"
   },
   "categoryNames": {
-    "desayunos": "Desayunos",
-    "almuerzos": "Almuerzos",
-    "cenas": "Cenas",
-    "postres": "Postres",
-    "sopas": "Sopas",
+    "desayunos-y-meriendas": "Desayunos y Meriendas",
+    "sopas-y-cremas": "Sopas y Cremas",
     "ensaladas": "Ensaladas",
-    "bebidas": "Bebidas",
-    "snacks": "Snacks",
+    "pastas-y-arroces": "Pastas y Arroces",
+    "carnes": "Carnes",
+    "pescados-y-mariscos": "Pescados y Mariscos",
+    "vegetariano-y-vegano": "Vegetariano y Vegano",
     "panaderia": "Panaderia",
-    "mariscos": "Mariscos"
+    "postres": "Postres",
+    "bebidas": "Bebidas"
   },
   "myRecipes": {
     "title": "Mis Recetas",
@@ -285,7 +285,8 @@
     "saveError": "Error al guardar la nota",
     "updateError": "Error al actualizar la nota",
     "deleteError": "Error al eliminar la nota",
-    "noNotes": "No tienes notas para esta receta"
+    "noNotes": "No tienes notas para esta receta",
+    "minLength": "Minimo 10 caracteres"
   },
   "comments": {
     "title": "Comentarios",
@@ -386,7 +387,8 @@
     "fileTooLarge": "El archivo es demasiado grande (maximo 5MB)",
     "storageNotConfigured": "El almacenamiento no esta configurado",
     "storageUrlNotConfigured": "URL de almacenamiento no configurada",
-    "noteTooLong": "La nota no puede exceder 5000 caracteres",
+    "noteTooShort": "La nota debe tener al menos 10 caracteres",
+    "noteTooLong": "La nota no puede exceder 500 caracteres",
     "tagNameInvalid": "Solo letras, numeros y espacios",
     "tagNameTooShort": "El nombre del tag debe tener al menos 3 caracteres",
     "cannotDeleteDefaultTag": "No se pueden eliminar tags predeterminados",

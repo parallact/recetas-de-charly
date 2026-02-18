@@ -44,7 +44,10 @@ export async function addRecipeNote(recipeId: string, content: string) {
   }
 
   const trimmed = content.trim()
-  if (trimmed.length > 5000) {
+  if (trimmed.length < 10) {
+    return { success: false, error: 'noteTooShort', data: null }
+  }
+  if (trimmed.length > 500) {
     return { success: false, error: 'noteTooLong', data: null }
   }
 
@@ -92,7 +95,10 @@ export async function updateRecipeNote(noteId: string, content: string) {
     }
 
     const trimmed = content.trim()
-    if (trimmed.length > 5000) {
+    if (trimmed.length < 10) {
+      return { success: false, error: 'noteTooShort' }
+    }
+    if (trimmed.length > 500) {
       return { success: false, error: 'noteTooLong' }
     }
 

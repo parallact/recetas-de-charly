@@ -209,16 +209,16 @@
     "viewAllRecipes": "View all recipes"
   },
   "categoryNames": {
-    "desayunos": "Breakfasts",
-    "almuerzos": "Lunches",
-    "cenas": "Dinners",
-    "postres": "Desserts",
-    "sopas": "Soups",
+    "desayunos-y-meriendas": "Breakfasts & Snacks",
+    "sopas-y-cremas": "Soups & Creams",
     "ensaladas": "Salads",
-    "bebidas": "Beverages",
-    "snacks": "Snacks",
+    "pastas-y-arroces": "Pasta & Rice",
+    "carnes": "Meats",
+    "pescados-y-mariscos": "Fish & Seafood",
+    "vegetariano-y-vegano": "Vegetarian & Vegan",
     "panaderia": "Bakery",
-    "mariscos": "Seafood"
+    "postres": "Desserts",
+    "bebidas": "Beverages"
   },
   "myRecipes": {
     "title": "My Recipes",
@@ -285,7 +285,8 @@
     "saveError": "Error saving note",
     "updateError": "Error updating note",
     "deleteError": "Error deleting note",
-    "noNotes": "You don't have notes for this recipe"
+    "noNotes": "You don't have notes for this recipe",
+    "minLength": "Minimum 10 characters"
   },
   "comments": {
     "title": "Comments",
@@ -386,7 +387,8 @@
     "fileTooLarge": "File is too large (max 5MB)",
     "storageNotConfigured": "File storage is not configured",
     "storageUrlNotConfigured": "Storage URL is not configured",
-    "noteTooLong": "Note cannot exceed 5000 characters",
+    "noteTooShort": "Note must be at least 10 characters",
+    "noteTooLong": "Note cannot exceed 500 characters",
     "tagNameInvalid": "Only letters, numbers, and spaces allowed",
     "tagNameTooShort": "Tag name must be at least 3 characters",
     "cannotDeleteDefaultTag": "Cannot delete predefined tags",

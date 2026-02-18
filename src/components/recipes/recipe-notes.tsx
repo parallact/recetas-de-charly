@@ -147,9 +147,13 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder={t('placeholder')}
                 rows={3}
+                maxLength={500}
                 className="resize-none"
               />
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-between">
+                <span className={`text-xs ${newNote.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  {newNote.length}/500{newNote.trim().length > 0 && newNote.trim().length < 10 && ` — ${t('minLength')}`}
+                </span>
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
@@ -164,7 +168,7 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                   <Button
                     size="sm"
                     onClick={handleAddNote}
-                    disabled={saving || !newNote.trim()}
+                    disabled={saving || newNote.trim().length < 10}
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -191,27 +195,33 @@ export function RecipeNotes({ recipeId }: RecipeNotesProps) {
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
                         rows={3}
+                        maxLength={500}
                         className="resize-none"
                       />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingId(null)}
-                        >
-                          {tc('cancel')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleUpdateNote(note.id)}
-                          disabled={saving}
-                        >
-                          {saving ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            tc('save')
-                          )}
-                        </Button>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs ${editContent.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {editContent.length}/500{editContent.trim().length > 0 && editContent.trim().length < 10 && ` — ${t('minLength')}`}
+                        </span>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingId(null)}
+                          >
+                            {tc('cancel')}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdateNote(note.id)}
+                            disabled={saving || editContent.trim().length < 10}
+                          >
+                            {saving ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              tc('save')
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ) : (
