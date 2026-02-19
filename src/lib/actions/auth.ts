@@ -149,11 +149,16 @@ export async function registerUser(
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`
 
-    await sendEmail({
-      to: cleanEmail,
-      subject: 'Verificá tu email — Recetas de Charly',
-      html: verifyEmailTemplate(verifyUrl),
-    })
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: 'Verificá tu email — Recetas de Charly',
+        html: verifyEmailTemplate(verifyUrl),
+      })
+    } catch (emailError) {
+      console.error('[registerUser] Failed to send verification email:', emailError)
+      // User was created successfully — email failure is non-fatal
+    }
 
     return { success: true, requiresVerification: true }
   } catch {
@@ -341,11 +346,15 @@ export async function resendVerificationEmail(email: string): Promise<{ success:
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`
 
-    await sendEmail({
-      to: cleanEmail,
-      subject: 'Verificá tu email — Recetas de Charly',
-      html: verifyEmailTemplate(verifyUrl),
-    })
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: 'Verificá tu email — Recetas de Charly',
+        html: verifyEmailTemplate(verifyUrl),
+      })
+    } catch (emailError) {
+      console.error('[resendVerification] Failed to send email:', emailError)
+    }
 
     return { success: true }
   } catch {
