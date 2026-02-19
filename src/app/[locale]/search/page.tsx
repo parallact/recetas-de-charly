@@ -7,11 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Search, SlidersHorizontal, ChevronLeft, ChevronRight, Tag } from 'lucide-react'
+import { Search, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import { prisma } from '@/lib/prisma'
 import { RecipeCard } from '@/components/recipes/recipe-card'
-import { Badge } from '@/components/ui/badge'
 import { Prisma } from '@/generated/prisma'
 import { getTranslations } from 'next-intl/server'
 import { StaggerContainer, StaggerItem } from '@/components/ui/motion'
@@ -23,7 +22,6 @@ interface SearchFilters {
   category?: string
   difficulty?: string
   time?: string
-  tag?: string
   page?: number
 }
 
@@ -45,7 +43,6 @@ interface SearchRecipe {
 interface SearchResult {
   recipes: SearchRecipe[]
   categories: Array<{ id: string; name: string; slug: string }>
-  tags: Array<{ id: string; name: string; slug: string }>
   totalCount: number
   totalPages: number
   currentPage: number
@@ -56,7 +53,6 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
   const emptyResult: SearchResult = {
     recipes: [],
     categories: [],
-    tags: [],
     totalCount: 0,
     totalPages: 0,
     currentPage: filters.page || 1,
@@ -64,17 +60,11 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
   }
 
   try {
-    // Fetch categories and tags for filter dropdowns
-    const [categories, tags] = await Promise.all([
-      prisma.categories.findMany({
-        select: { id: true, name: true, slug: true },
-        orderBy: { name: 'asc' }
-      }),
-      prisma.tags.findMany({
-        select: { id: true, name: true, slug: true },
-        orderBy: { name: 'asc' }
-      })
-    ])
+    // Fetch categories for filter dropdowns
+    const categories = await prisma.categories.findMany({
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' }
+    })
 
     // Calculate pagination
     const currentPage = Math.max(1, filters.page || 1)
@@ -108,17 +98,6 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
         recipe_categories: {
           some: {
             categories: { slug: filters.category }
-          }
-        }
-      })
-    }
-
-    // Tag filter
-    if (filters.tag && filters.tag !== 'all') {
-      whereConditions.push({
-        recipe_tags: {
-          some: {
-            tags: { slug: filters.tag }
           }
         }
       })
@@ -162,7 +141,6 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
     return {
       recipes: formattedRecipes as SearchRecipe[],
       categories,
-      tags,
       totalCount,
       totalPages,
       currentPage,
@@ -176,11 +154,11 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; difficulty?: string; time?: string; tag?: string; page?: string }>
+  searchParams: Promise<{ q?: string; category?: string; difficulty?: string; time?: string; page?: string }>
 }) {
   const params = await searchParams
   const page = Math.max(1, parseInt(params.page || '1') || 1)
-  const { recipes, categories, tags, totalPages, currentPage, error } = await searchRecipes({
+  const { recipes, categories, totalPages, currentPage, error } = await searchRecipes({
     ...params,
     page
   })
@@ -197,7 +175,6 @@ export default async function SearchPage({
     if (params.category) urlParams.set('category', params.category)
     if (params.difficulty) urlParams.set('difficulty', params.difficulty)
     if (params.time) urlParams.set('time', params.time)
-    if (params.tag) urlParams.set('tag', params.tag)
     if (pageNum > 1) urlParams.set('page', pageNum.toString())
     const queryString = urlParams.toString()
     return `/search${queryString ? `?${queryString}` : ''}`
@@ -214,7 +191,6 @@ export default async function SearchPage({
             {params.category && <input type="hidden" name="category" value={params.category} />}
             {params.difficulty && <input type="hidden" name="difficulty" value={params.difficulty} />}
             {params.time && <input type="hidden" name="time" value={params.time} />}
-            {params.tag && <input type="hidden" name="tag" value={params.tag} />}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -276,50 +252,9 @@ export default async function SearchPage({
               ))}
             </SelectContent>
           </Select>
-          {tags.length > 0 && (
-            <Select name="tag" defaultValue={params.tag || 'all'}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder={t('tag')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{tc('all')}</SelectItem>
-                {tags.map((tag) => (
-                  <SelectItem key={tag.id} value={tag.slug}>
-                    <span className="flex items-center gap-2">
-                      <Tag className="h-3 w-3" />
-                      {tag.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
           <Button type="submit" variant="secondary">{tc('apply')}</Button>
         </form>
       </div>
-
-      {/* Active Tag Filter Badge */}
-      {params.tag && params.tag !== 'all' && (
-        <div className="flex items-center gap-2 mb-6">
-          <span className="text-sm text-muted-foreground">{t('filteringByTag')}</span>
-          {(() => {
-            const activeTag = tags.find(tg => tg.slug === params.tag)
-            if (!activeTag) return null
-            return (
-              <Badge variant="outline" className="gap-1">
-                <Tag className="h-3 w-3" />
-                {activeTag.name}
-              </Badge>
-            )
-          })()}
-          <Link
-            href={buildPageUrl(1).replace(/[?&]tag=[^&]+/, '').replace(/\?$/, '')}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
-            {t('removeFilter')}
-          </Link>
-        </div>
-      )}
 
       {/* Error State */}
       {error && (
@@ -390,7 +325,7 @@ export default async function SearchPage({
               : t('tryDifferent')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            {(params.q || params.category || params.difficulty || params.time || params.tag) && (
+            {(params.q || params.category || params.difficulty || params.time) && (
               <Button variant="outline" asChild>
                 <Link href="/search">{t('clearFilters')}</Link>
               </Button>

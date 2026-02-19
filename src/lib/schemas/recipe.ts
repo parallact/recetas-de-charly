@@ -17,7 +17,7 @@ function boundedNumberString(max: number) {
 }
 
 // Regex patterns
-const TITLE_REGEX = /^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/
+const TITLE_REGEX = /^[A-Za-zÀ-ÿñÑ\s]+$/
 const LETTERS_ONLY_REGEX = /^[A-Za-zÀ-ÿñÑ\s]+$/
 
 // Zod schema for recipe form validation
@@ -33,7 +33,7 @@ export const instructionSchema = z.object({
 })
 
 export const recipeSchema = z.object({
-  title: z.string().min(3, 'Minimo 3 caracteres').max(100, 'Maximo 100 caracteres').regex(TITLE_REGEX, 'Solo letras, numeros, espacios y puntuacion basica (,.-)'),
+  title: z.string().min(3, 'Minimo 3 caracteres').max(100, 'Maximo 100 caracteres').regex(TITLE_REGEX, 'Solo letras y espacios'),
   description: z.string().max(500, 'Maximo 500 caracteres').optional().or(z.literal('')),
   imageUrl: z.string().url('URL no valida').optional().or(z.literal('')),
   prepTime: boundedIntString(1440),

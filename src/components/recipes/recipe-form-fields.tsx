@@ -46,7 +46,7 @@ function clampNumericInput(e: React.FormEvent<HTMLInputElement>, maxDigits: numb
 /** Filter out characters that don't match the allowed pattern */
 function filterTitleInput(e: React.FormEvent<HTMLInputElement>) {
   const input = e.currentTarget
-  input.value = input.value.replace(/[^A-Za-zÀ-ÿñÑ0-9\s,.\-()]/g, '')
+  input.value = input.value.replace(/[^A-Za-zÀ-ÿñÑ\s]/g, '')
 }
 
 interface TagData {
