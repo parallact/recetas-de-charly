@@ -57,7 +57,7 @@ export function Header({ initialUser }: HeaderProps) {
         id: session.user.id || '',
         email: session.user.email || '',
         display_name: session.user.name || undefined,
-        avatar_url: session.user.image || undefined,
+        avatar_url: session.user.image || initialUser?.avatar_url || undefined,
       }
     }
     if (status === 'unauthenticated') {

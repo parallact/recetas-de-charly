@@ -87,10 +87,7 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
     if (filters.q?.trim()) {
       const searchTerm = filters.q.trim().slice(0, 100)
       whereConditions.push({
-        OR: [
-          { title: { contains: searchTerm, mode: 'insensitive' } },
-          { description: { contains: searchTerm, mode: 'insensitive' } }
-        ]
+        title: { contains: searchTerm, mode: 'insensitive' }
       })
     }
 
