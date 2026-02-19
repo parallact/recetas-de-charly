@@ -73,7 +73,7 @@ export default function RegisterPage() {
         return
       }
 
-      toast.success(t('accountCreated'))
+      toast.success(t('verificationLinkSent'))
       router.push('/login')
     } catch {
       toast.error(t('registerError'))

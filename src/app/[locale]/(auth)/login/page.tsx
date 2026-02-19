@@ -22,10 +22,21 @@ export default function LoginPage() {
   const rawRedirect = searchParams.get('redirect') || '/'
   const redirectTo = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
   const [isLoading, setIsLoading] = useState(false)
+  const [shownParam, setShownParam] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const t = useTranslations('auth')
   const te = useTranslations('serverErrors')
+
+  // Show one-time success toasts from redirects
+  if (!shownParam) {
+    setShownParam(true)
+    if (searchParams.get('verified') === 'true') {
+      setTimeout(() => toast.success(t('emailVerifiedSuccess')), 100)
+    } else if (searchParams.get('reset') === 'true') {
+      setTimeout(() => toast.success(t('passwordUpdated')), 100)
+    }
+  }
 
   const handleCredentialsLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -104,7 +115,12 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">{t('password')}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">{t('password')}</Label>
+              <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                {t('forgotPassword')}
+              </Link>
+            </div>
             <PasswordInput
               id="password"
               placeholder={t('passwordPlaceholder')}

@@ -69,7 +69,9 @@
       "Bash(pnpm add:*)",
       "mcp__plugin_context7_context7__resolve-library-id",
       "mcp__plugin_context7_context7__query-docs",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "mcp__github__search_issues",
+      "mcp__github__list_issues"
     ]
   },
   "enableAllProjectMcpServers": true,
