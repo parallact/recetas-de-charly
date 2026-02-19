@@ -208,11 +208,16 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const resetUrl = `${baseUrl}/reset-password?token=${token}`
 
-    await sendEmail({
-      to: cleanEmail,
-      subject: 'Resetear contraseña — Recetas de Charly',
-      html: passwordResetTemplate(resetUrl),
-    })
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject: 'Resetear contraseña — Recetas de Charly',
+        html: passwordResetTemplate(resetUrl),
+      })
+    } catch (emailError) {
+      console.error('[requestPasswordReset] Failed to send reset email:', emailError)
+      // Token created — email failure is non-fatal, always return success
+    }
 
     return { success: true }
   } catch {
