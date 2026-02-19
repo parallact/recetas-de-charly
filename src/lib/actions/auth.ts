@@ -146,7 +146,7 @@ export async function registerUser(
       }
     })
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3003'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`
 
     await sendEmail({
@@ -200,7 +200,7 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
       }
     })
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3003'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const resetUrl = `${baseUrl}/reset-password?token=${token}`
 
     await sendEmail({
@@ -338,7 +338,7 @@ export async function resendVerificationEmail(email: string): Promise<{ success:
       data: { identifier: cleanEmail, token, expires }
     })
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3003'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
     const verifyUrl = `${baseUrl}/verify-email?token=${token}`
 
     await sendEmail({
