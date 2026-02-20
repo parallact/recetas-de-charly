@@ -92,7 +92,7 @@ export function EditRecipeClient({ recipe, categories, tags }: EditRecipeClientP
     difficulty: recipe.difficulty as 'easy' | 'medium' | 'hard' | undefined,
     ingredients: ingredients.length > 0 ? ingredients : [{ name: '', quantity: '', unit: '', customUnit: '' }],
     instructions: instructions.length > 0 ? instructions : [{ content: '' }],
-    categoryIds: [],
+    categoryIds: (recipe.recipe_categories || []).map((rc) => rc.category_id),
   }
 
   const categoryIds = (recipe.recipe_categories || []).map((rc) => rc.category_id)

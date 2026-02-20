@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { MessageSquare, Trash2, Loader2 } from 'lucide-react'
@@ -159,10 +160,12 @@ export function RecipeComments({ recipeId, userId }: RecipeCommentsProps) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 mb-2">
                       {comment.user.avatar ? (
-                        <img
+                        <Image
                           src={comment.user.avatar}
                           alt={comment.user.name}
-                          className="w-7 h-7 rounded-full object-cover"
+                          width={28}
+                          height={28}
+                          className="rounded-full object-cover"
                         />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">

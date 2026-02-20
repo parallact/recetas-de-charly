@@ -16,7 +16,7 @@ const instructionInputSchema = z.object({
 
 const recipeInputSchema = z.object({
   title: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/),
-  slug: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
   description: z.string().max(500).nullable(),
   image_url: z.union([z.string().url(), z.literal(''), z.null()]),
   prep_time: z.number().int().min(0).max(1440).nullable(),

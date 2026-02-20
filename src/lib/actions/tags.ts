@@ -4,6 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { handleActionError, isPrismaError } from './error-utils'
 import { requireAuth } from './utils'
 
+function isAdmin(email?: string | null): boolean {
+  const adminEmail = process.env.ADMIN_EMAIL
+  return !!adminEmail && email === adminEmail
+}
+
 // Predefined default tags
 export const DEFAULT_TAGS = [
   // Dieta
@@ -40,6 +45,9 @@ export async function createTag(name: string, slug: string) {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error: error || 'notAuthenticated', data: null }
+  }
+  if (!isAdmin(user.email)) {
+    return { success: false, error: 'forbidden', data: null }
   }
 
   const trimmedName = name.trim()
@@ -87,6 +95,9 @@ export async function seedDefaultTags() {
   if (!user) {
     return { success: false, error: error || 'notAuthenticated' }
   }
+  if (!isAdmin(user.email)) {
+    return { success: false, error: 'forbidden' }
+  }
 
   try {
     for (const name of DEFAULT_TAGS) {
@@ -115,6 +126,9 @@ export async function deleteTag(tagId: string) {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error: error || 'notAuthenticated' }
+  }
+  if (!isAdmin(user.email)) {
+    return { success: false, error: 'forbidden' }
   }
 
   try {

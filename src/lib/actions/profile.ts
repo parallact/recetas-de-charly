@@ -60,6 +60,18 @@ export async function updateUserProfile(data: ProfileData) {
       }
     }
 
+    // Validate avatar_url
+    if (data.avatar_url) {
+      try {
+        const url = new URL(data.avatar_url.trim())
+        if (url.protocol !== 'https:') {
+          return { success: false, error: 'avatarInvalidUrl' }
+        }
+      } catch {
+        return { success: false, error: 'avatarInvalidUrl' }
+      }
+    }
+
     // Validate bio
     if (data.bio && !data.bio.trim()) {
       return { success: false, error: 'bioOnlySpaces' }
