@@ -21,10 +21,17 @@ export const DEFAULT_TAGS = [
   'Rápido', 'Al Horno', 'A la Parrilla', 'Saludable', 'Comfort Food', 'Para Niños',
 ]
 
-// Get all tags
+// Get tags visible to the current user: default tags + their own custom tags
 export async function getAllTags() {
+  const { user } = await requireAuth()
+
   try {
+    const where = user
+      ? { OR: [{ is_default: true, user_id: null }, { user_id: user.id }] }
+      : { is_default: true, user_id: null }
+
     const tags = await prisma.tags.findMany({
+      where,
       orderBy: [{ is_default: 'desc' }, { name: 'asc' }],
       select: {
         id: true,
@@ -40,14 +47,11 @@ export async function getAllTags() {
   }
 }
 
-// Create a new tag
+// Create a new tag owned by the current user
 export async function createTag(name: string, slug: string) {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error: error || 'notAuthenticated', data: null }
-  }
-  if (!isAdmin(user.email)) {
-    return { success: false, error: 'forbidden', data: null }
   }
 
   const trimmedName = name.trim()
@@ -71,6 +75,7 @@ export async function createTag(name: string, slug: string) {
       data: {
         name: trimmedName,
         slug: trimmedSlug,
+        user_id: user.id,
       },
       select: {
         id: true,
@@ -89,7 +94,7 @@ export async function createTag(name: string, slug: string) {
   }
 }
 
-// Seed default tags
+// Seed default tags (admin only)
 export async function seedDefaultTags() {
   const { user, error } = await requireAuth()
   if (!user) {
@@ -108,11 +113,20 @@ export async function seedDefaultTags() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
 
-      await prisma.tags.upsert({
-        where: { name },
-        create: { name, slug, is_default: true },
-        update: { is_default: true },
+      const existing = await prisma.tags.findFirst({
+        where: { name, user_id: null },
       })
+
+      if (!existing) {
+        await prisma.tags.create({
+          data: { name, slug, is_default: true, user_id: null },
+        })
+      } else {
+        await prisma.tags.update({
+          where: { id: existing.id },
+          data: { is_default: true },
+        })
+      }
     }
 
     return { success: true }
@@ -121,20 +135,17 @@ export async function seedDefaultTags() {
   }
 }
 
-// Delete a tag
+// Delete a tag — only the owner can delete their own custom tags
 export async function deleteTag(tagId: string) {
   const { user, error } = await requireAuth()
   if (!user) {
     return { success: false, error: error || 'notAuthenticated' }
   }
-  if (!isAdmin(user.email)) {
-    return { success: false, error: 'forbidden' }
-  }
 
   try {
     const tag = await prisma.tags.findUnique({
       where: { id: tagId },
-      select: { is_default: true },
+      select: { user_id: true, is_default: true },
     })
 
     if (!tag) {
@@ -143,6 +154,10 @@ export async function deleteTag(tagId: string) {
 
     if (tag.is_default) {
       return { success: false, error: 'cannotDeleteDefaultTag' }
+    }
+
+    if (tag.user_id !== user.id) {
+      return { success: false, error: 'forbidden' }
     }
 
     await prisma.tags.delete({

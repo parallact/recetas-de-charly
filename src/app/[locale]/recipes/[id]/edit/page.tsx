@@ -22,9 +22,15 @@ async function getCategories(): Promise<Category[]> {
   }
 }
 
-async function getAllTags(): Promise<TagData[]> {
+async function getAllTags(userId: string): Promise<TagData[]> {
   try {
     const tags = await prisma.tags.findMany({
+      where: {
+        OR: [
+          { is_default: true, user_id: null },
+          { user_id: userId },
+        ],
+      },
       orderBy: [{ is_default: 'desc' }, { name: 'asc' }],
       select: {
         id: true,
@@ -70,7 +76,7 @@ export default async function EditRecipePage({ params }: EditRecipePageProps) {
       },
     }).catch(() => null),
     getCategories(),
-    getAllTags(),
+    getAllTags(session.user.id),
   ])
 
   if (!recipe) {

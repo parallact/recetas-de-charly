@@ -1,3 +1,4 @@
+import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { NewRecipeClient } from './new-recipe-client'
 import type { Category } from '@/lib/types'
@@ -20,9 +21,15 @@ async function getCategories(): Promise<Category[]> {
   }
 }
 
-async function getDefaultTags(): Promise<TagData[]> {
+async function getUserTags(userId: string): Promise<TagData[]> {
   try {
     const tags = await prisma.tags.findMany({
+      where: {
+        OR: [
+          { is_default: true, user_id: null },
+          { user_id: userId },
+        ],
+      },
       orderBy: [{ is_default: 'desc' }, { name: 'asc' }],
       select: {
         id: true,
@@ -38,7 +45,9 @@ async function getDefaultTags(): Promise<TagData[]> {
 }
 
 export default async function NewRecipePage() {
-  const [categories, tags] = await Promise.all([getCategories(), getDefaultTags()])
+  const session = await auth()
+  const userId = session?.user?.id ?? ''
+  const [categories, tags] = await Promise.all([getCategories(), getUserTags(userId)])
 
   return <NewRecipeClient categories={categories} tags={tags} />
 }
