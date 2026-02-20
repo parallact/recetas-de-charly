@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { Card, CardContent } from '@/components/ui/card'
@@ -50,6 +50,12 @@ export default function BookmarksPage() {
   const ta = useTranslations('auth')
   const te = useTranslations('serverErrors')
 
+  const isMounted = useRef(true)
+  useEffect(() => {
+    isMounted.current = true
+    return () => { isMounted.current = false }
+  }, [])
+
   useEffect(() => {
     async function loadBookmarks() {
       if (status === 'loading') return
@@ -61,6 +67,7 @@ export default function BookmarksPage() {
       }
 
       const result = await getUserBookmarks()
+      if (!isMounted.current) return
 
       if (!result.success) {
         toast.error(result.error ? te(result.error) : t('loadError'))

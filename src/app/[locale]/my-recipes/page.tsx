@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { Card, CardContent } from '@/components/ui/card'
@@ -57,6 +57,12 @@ export default function MyRecipesPage() {
   const ta = useTranslations('auth')
   const te = useTranslations('serverErrors')
 
+  const isMounted = useRef(true)
+  useEffect(() => {
+    isMounted.current = true
+    return () => { isMounted.current = false }
+  }, [])
+
   const loadRecipes = useCallback(async () => {
     if (status === 'loading') return
 
@@ -67,6 +73,7 @@ export default function MyRecipesPage() {
     }
 
     const result = await getUserRecipes()
+    if (!isMounted.current) return
 
     if (!result.success) {
       toast.error(result.error ? te(result.error) : t('noRecipes'))

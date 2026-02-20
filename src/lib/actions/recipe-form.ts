@@ -1,38 +1,10 @@
 'use server'
 
-import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { requireAuth } from './utils'
 import { handleActionError, isPrismaError } from './error-utils'
-
-const ingredientInputSchema = z.object({
-  name: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
-  quantity: z.number().min(0).nullable(),
-  unit: z.string().max(50).nullable(),
-})
-
-const instructionInputSchema = z.object({
-  content: z.string().min(1).max(1000).trim(),
-})
-
-const recipeInputSchema = z.object({
-  title: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
-  slug: z.string().min(1).max(200),
-  description: z.string().max(500).nullable(),
-  image_url: z.union([z.string().url(), z.literal(''), z.null()]),
-  prep_time: z.number().int().min(0).max(1440).nullable(),
-  cooking_time: z.number().int().min(0).max(1440).nullable(),
-  servings: z.number().int().min(1).max(50),
-  difficulty: z.string().min(1).max(20),
-  is_public: z.boolean(),
-  ingredients: z.array(ingredientInputSchema).min(1).max(25),
-  instructions: z.array(instructionInputSchema).min(1).max(30),
-  category_ids: z.array(z.string()).max(3),
-  tag_ids: z.array(z.string()).max(7),
-})
-
-type RecipeFormInput = z.infer<typeof recipeInputSchema>
+import { recipeInputSchema, type RecipeApiInput } from '@/lib/schemas/recipe-api'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
@@ -42,34 +14,37 @@ type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
 async function upsertRecipeIngredients(
   tx: Tx,
   recipeId: string,
-  ingredients: RecipeFormInput['ingredients']
+  ingredients: RecipeApiInput['ingredients']
 ) {
+  // Upsert each ingredient name (sequential — no upsertMany in Prisma)
+  const resolved: { id: string; idx: number; quantity: RecipeApiInput['ingredients'][number]['quantity']; unit: RecipeApiInput['ingredients'][number]['unit'] }[] = []
   for (let i = 0; i < ingredients.length; i++) {
     const ing = ingredients[i]
     const name = ing.name.toLowerCase()
-
     const ingredient = await tx.ingredients.upsert({
       where: { name },
       create: { name },
       update: {},
     })
-
-    await tx.recipe_ingredients.create({
-      data: {
-        recipe_id: recipeId,
-        ingredient_id: ingredient.id,
-        quantity: ing.quantity,
-        unit: ing.unit,
-        order_index: i,
-      }
-    })
+    resolved.push({ id: ingredient.id, idx: i, quantity: ing.quantity, unit: ing.unit })
   }
+
+  // Batch insert all recipe_ingredients in one query
+  await tx.recipe_ingredients.createMany({
+    data: resolved.map(({ id, idx, quantity, unit }) => ({
+      recipe_id: recipeId,
+      ingredient_id: id,
+      quantity,
+      unit,
+      order_index: idx,
+    })),
+  })
 }
 
 async function createRecipeInstructions(
   tx: Tx,
   recipeId: string,
-  instructions: RecipeFormInput['instructions']
+  instructions: RecipeApiInput['instructions']
 ) {
   if (instructions.length > 0) {
     await tx.instructions.createMany({
@@ -114,7 +89,7 @@ async function createRecipeTags(
 
 // --- Public actions ---
 
-export async function createRecipe(input: RecipeFormInput) {
+export async function createRecipe(input: RecipeApiInput) {
   try {
     const { user, error } = await requireAuth()
     if (!user) {
@@ -164,7 +139,7 @@ export async function createRecipe(input: RecipeFormInput) {
   }
 }
 
-export async function updateRecipe(recipeId: string, input: RecipeFormInput) {
+export async function updateRecipe(recipeId: string, input: RecipeApiInput) {
   try {
     const { user, error } = await requireAuth()
     if (!user) {

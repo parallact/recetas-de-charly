@@ -1,34 +1,8 @@
 import { NextResponse } from 'next/server'
-import { z } from 'zod'
 import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
-
-const ingredientInputSchema = z.object({
-  name: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
-  quantity: z.number().min(0).max(9999).nullable(),
-  unit: z.string().max(50).nullable(),
-})
-
-const instructionInputSchema = z.object({
-  content: z.string().min(1).max(1000).trim(),
-})
-
-const recipeInputSchema = z.object({
-  title: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/),
-  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
-  description: z.string().max(500).nullable(),
-  image_url: z.union([z.string().url(), z.literal(''), z.null()]),
-  prep_time: z.number().int().min(0).max(1440).nullable(),
-  cooking_time: z.number().int().min(0).max(1440).nullable(),
-  servings: z.number().int().min(1).max(99),
-  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
-  is_public: z.boolean(),
-  ingredients: z.array(ingredientInputSchema).min(1).max(25),
-  instructions: z.array(instructionInputSchema).min(1).max(30),
-  category_ids: z.array(z.string()).min(1).max(3),
-  tag_ids: z.array(z.string()).max(7),
-})
+import { recipeInputSchema } from '@/lib/schemas/recipe-api'
 
 export async function POST(request: Request) {
   try {
@@ -61,27 +35,27 @@ export async function POST(request: Request) {
         }
       })
 
-      // Upsert ingredients
+      // Upsert ingredients then batch-insert recipe_ingredients
+      const resolved: { id: string; idx: number; quantity: typeof data.ingredients[number]['quantity']; unit: typeof data.ingredients[number]['unit'] }[] = []
       for (let i = 0; i < data.ingredients.length; i++) {
         const ing = data.ingredients[i]
-        const name = ing.name.toLowerCase()
         const ingredient = await tx.ingredients.upsert({
-          where: { name },
-          create: { name },
+          where: { name: ing.name.toLowerCase() },
+          create: { name: ing.name.toLowerCase() },
           update: {},
         })
-        await tx.recipe_ingredients.create({
-          data: {
-            recipe_id: recipe.id,
-            ingredient_id: ingredient.id,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            order_index: i,
-          }
-        })
+        resolved.push({ id: ingredient.id, idx: i, quantity: ing.quantity, unit: ing.unit })
       }
+      await tx.recipe_ingredients.createMany({
+        data: resolved.map(({ id, idx, quantity, unit }) => ({
+          recipe_id: recipe.id,
+          ingredient_id: id,
+          quantity,
+          unit,
+          order_index: idx,
+        })),
+      })
 
-      // Instructions
       if (data.instructions.length > 0) {
         await tx.instructions.createMany({
           data: data.instructions.map((inst, i) => ({
@@ -92,7 +66,6 @@ export async function POST(request: Request) {
         })
       }
 
-      // Categories
       if (data.category_ids.length > 0) {
         await tx.recipe_categories.createMany({
           data: data.category_ids.map(categoryId => ({
@@ -102,7 +75,6 @@ export async function POST(request: Request) {
         })
       }
 
-      // Tags
       if (data.tag_ids.length > 0) {
         await tx.recipe_tags.createMany({
           data: data.tag_ids.map(tagId => ({

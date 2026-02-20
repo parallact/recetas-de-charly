@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from '@/i18n/navigation'
 import { Link } from '@/i18n/navigation'
 import { useForm } from 'react-hook-form'
@@ -108,6 +108,12 @@ export default function ProfilePage() {
 
   const { reset: formReset } = form
 
+  const isMounted = useRef(true)
+  useEffect(() => {
+    isMounted.current = true
+    return () => { isMounted.current = false }
+  }, [])
+
   useEffect(() => {
     async function loadProfile() {
       if (status === 'loading') return
@@ -122,6 +128,7 @@ export default function ProfilePage() {
         getUserProfile(),
         getUserStats(),
       ])
+      if (!isMounted.current) return
 
       if (!profileResult.success || !profileResult.data) {
         toast.error(profileResult.error ? te(profileResult.error) : t('updateError'))

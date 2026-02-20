@@ -15,8 +15,14 @@ import { BookmarkButton } from '@/components/recipes/bookmark-button'
 import { LikeButton } from '@/components/recipes/like-button'
 import { ServingsScaler } from '@/components/recipes/servings-scaler'
 import { CookingMode } from '@/components/recipes/cooking-mode'
-import { RecipeNotes } from '@/components/recipes/recipe-notes'
-import { RecipeComments } from '@/components/recipes/recipe-comments'
+import dynamic from 'next/dynamic'
+
+const RecipeNotes = dynamic(() =>
+  import('@/components/recipes/recipe-notes').then((m) => m.RecipeNotes)
+)
+const RecipeComments = dynamic(() =>
+  import('@/components/recipes/recipe-comments').then((m) => m.RecipeComments)
+)
 import { prisma } from '@/lib/prisma'
 import { getUser } from '@/lib/auth/get-user'
 import { DIFFICULTY_COLORS } from '@/lib/constants'

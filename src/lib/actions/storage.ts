@@ -4,10 +4,12 @@ import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getR2Client, R2_BUCKET_NAME } from '@/lib/r2'
 import { requireAuth } from './utils'
 import { handleActionError } from './error-utils'
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif']
-const MAX_FILE_SIZE = 4 * 1024 * 1024 // 4MB (Vercel serverless limit)
+import {
+  UPLOAD_ALLOWED_TYPES,
+  UPLOAD_ALLOWED_EXTENSIONS,
+  UPLOAD_MAX_FILE_SIZE,
+  UPLOAD_ALLOWED_FOLDERS,
+} from '@/lib/upload-config'
 
 interface UploadResult {
   success: boolean
@@ -27,18 +29,17 @@ export async function uploadFile(
 
   const file = formData.get('file') as File | null
   const rawFolder = (formData.get('folder') as string) || 'recipes'
-  const ALLOWED_FOLDERS = ['recipes', 'avatars', 'profiles']
-  const folder = ALLOWED_FOLDERS.includes(rawFolder) ? rawFolder : 'recipes'
+  const folder = UPLOAD_ALLOWED_FOLDERS.includes(rawFolder as typeof UPLOAD_ALLOWED_FOLDERS[number]) ? rawFolder : 'recipes'
 
   if (!file) {
     return { success: false, error: 'noFileProvided' }
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!UPLOAD_ALLOWED_TYPES.includes(file.type)) {
     return { success: false, error: 'fileTypeNotAllowed' }
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > UPLOAD_MAX_FILE_SIZE) {
     return { success: false, error: 'fileTooLarge' }
   }
 
@@ -53,7 +54,7 @@ export async function uploadFile(
 
   try {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    if (!UPLOAD_ALLOWED_EXTENSIONS.includes(ext)) {
       return { success: false, error: 'invalidFileExtension' }
     }
 
