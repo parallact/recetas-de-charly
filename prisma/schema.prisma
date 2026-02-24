@@ -164,6 +164,7 @@ model recipes {
   source_url         String?
   cooking_time       Int?
   prep_time          Int?
+  total_time         Int?
   servings           Int?                     @default(4)
   difficulty         String?
   is_public          Boolean?                 @default(true)
