@@ -21,8 +21,7 @@ interface SearchFilters {
   q?: string
   category?: string
   difficulty?: string
-  prepTime?: string
-  cookTime?: string
+  totalTime?: string
   page?: number
 }
 
@@ -87,19 +86,14 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
       whereConditions.push({ difficulty: filters.difficulty })
     }
 
-    // Time filters (non-overlapping ranges)
-    const parseTimeFilter = (val?: string) => {
-      if (!val || val === 'all') return null
-      if (val === 'lt15')   return { lt: 15 }
-      if (val === '15to30') return { gte: 15, lte: 30 }
-      if (val === '30to60') return { gt: 30, lte: 60 }
-      if (val === 'gt60')   return { gt: 60 }
-      return null
+    // Total time filter (prep + cooking combined)
+    if (filters.totalTime && filters.totalTime !== 'all') {
+      const v = filters.totalTime
+      if (v === 'lt30')    whereConditions.push({ total_time: { lt: 30 } })
+      if (v === '30to60')  whereConditions.push({ total_time: { gte: 30, lte: 60 } })
+      if (v === '60to120') whereConditions.push({ total_time: { gte: 61, lte: 120 } })
+      if (v === 'gt120')   whereConditions.push({ total_time: { gt: 120 } })
     }
-    const prepTimeFilter = parseTimeFilter(filters.prepTime)
-    const cookTimeFilter = parseTimeFilter(filters.cookTime)
-    if (prepTimeFilter) whereConditions.push({ prep_time: prepTimeFilter })
-    if (cookTimeFilter) whereConditions.push({ cooking_time: cookTimeFilter })
 
     // Category filter
     if (filters.category && filters.category !== 'all') {
@@ -163,7 +157,7 @@ async function searchRecipes(filters: SearchFilters): Promise<SearchResult> {
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; difficulty?: string; prepTime?: string; cookTime?: string; page?: string }>
+  searchParams: Promise<{ q?: string; category?: string; difficulty?: string; totalTime?: string; page?: string }>
 }) {
   const params = await searchParams
   const page = Math.max(1, parseInt(params.page || '1') || 1)
@@ -183,8 +177,7 @@ export default async function SearchPage({
     if (params.q) urlParams.set('q', params.q)
     if (params.category) urlParams.set('category', params.category)
     if (params.difficulty) urlParams.set('difficulty', params.difficulty)
-    if (params.prepTime) urlParams.set('prepTime', params.prepTime)
-    if (params.cookTime) urlParams.set('cookTime', params.cookTime)
+    if (params.totalTime) urlParams.set('totalTime', params.totalTime)
     if (pageNum > 1) urlParams.set('page', pageNum.toString())
     const queryString = urlParams.toString()
     return `/search${queryString ? `?${queryString}` : ''}`
@@ -200,8 +193,7 @@ export default async function SearchPage({
             {/* Preserve other filters */}
             {params.category && <input type="hidden" name="category" value={params.category} />}
             {params.difficulty && <input type="hidden" name="difficulty" value={params.difficulty} />}
-            {params.prepTime && <input type="hidden" name="prepTime" value={params.prepTime} />}
-            {params.cookTime && <input type="hidden" name="cookTime" value={params.cookTime} />}
+            {params.totalTime && <input type="hidden" name="totalTime" value={params.totalTime} />}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -239,28 +231,16 @@ export default async function SearchPage({
               <SelectItem value="hard">{td('hard')}</SelectItem>
             </SelectContent>
           </Select>
-          <Select name="prepTime" defaultValue={params.prepTime || 'all'}>
+          <Select name="totalTime" defaultValue={params.totalTime || 'all'}>
             <SelectTrigger className="w-[175px]">
-              <SelectValue placeholder={t('prepTimeFilter')} />
+              <SelectValue placeholder={t('totalTimeFilter')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('anyDuration')}</SelectItem>
-              <SelectItem value="lt15">{t('under15')}</SelectItem>
-              <SelectItem value="15to30">{t('from15to30')}</SelectItem>
+              <SelectItem value="lt30">{t('under30')}</SelectItem>
               <SelectItem value="30to60">{t('from30to60')}</SelectItem>
-              <SelectItem value="gt60">{t('over60')}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select name="cookTime" defaultValue={params.cookTime || 'all'}>
-            <SelectTrigger className="w-[175px]">
-              <SelectValue placeholder={t('cookTimeFilter')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t('anyDuration')}</SelectItem>
-              <SelectItem value="lt15">{t('under15')}</SelectItem>
-              <SelectItem value="15to30">{t('from15to30')}</SelectItem>
-              <SelectItem value="30to60">{t('from30to60')}</SelectItem>
-              <SelectItem value="gt60">{t('over60')}</SelectItem>
+              <SelectItem value="60to120">{t('from60to120')}</SelectItem>
+              <SelectItem value="gt120">{t('over120')}</SelectItem>
             </SelectContent>
           </Select>
           <Select name="category" defaultValue={params.category || 'all'}>
@@ -349,7 +329,7 @@ export default async function SearchPage({
               : t('tryDifferent')}
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            {(params.q || params.category || params.difficulty || params.prepTime || params.cookTime) && (
+            {(params.q || params.category || params.difficulty || params.totalTime) && (
               <Button variant="outline" asChild>
                 <Link href="/search">{t('clearFilters')}</Link>
               </Button>
