@@ -20,6 +20,7 @@ function createTransporter() {
     host,
     port: parseInt(port),
     secure: false,
+    requireTLS: true,
     auth: { user, pass },
   })
 }
