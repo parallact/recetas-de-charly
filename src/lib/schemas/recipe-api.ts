@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TITLE_REGEX } from './recipe'
 
 export const ingredientInputSchema = z.object({
   name: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ\s]+$/),
@@ -11,7 +12,7 @@ export const instructionInputSchema = z.object({
 })
 
 export const recipeInputSchema = z.object({
-  title: z.string().min(1).max(100).trim().regex(/^[A-Za-zÀ-ÿñÑ0-9\s,.\-()]+$/),
+  title: z.string().min(3).max(100).trim().regex(TITLE_REGEX),
   slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
   description: z.string().max(500).nullable(),
   image_url: z.union([z.string().url(), z.literal(''), z.null()]),
