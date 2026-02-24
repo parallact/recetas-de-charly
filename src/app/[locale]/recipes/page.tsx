@@ -4,11 +4,14 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, ChefHat } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@/generated/prisma'
 import type { Recipe, Category } from '@/lib/types'
 import { RecipeCard } from '@/components/recipes/recipe-card'
 import { Pagination } from '@/components/ui/pagination'
 import { getTranslations } from 'next-intl/server'
 import { StaggerContainer, StaggerItem } from '@/components/ui/motion'
+
+export const dynamic = 'force-dynamic'
 
 const RECIPES_PER_PAGE = 12
 
@@ -31,7 +34,7 @@ async function getRecipes(categorySlug?: string, page = 1): Promise<PaginatedRes
     const skip = (currentPage - 1) * RECIPES_PER_PAGE
 
     // Build where clause
-    let whereClause: Record<string, unknown> = { is_public: true }
+    let whereClause: Prisma.recipesWhereInput = { is_public: true }
 
     if (categorySlug) {
       const category = await prisma.categories.findUnique({
