@@ -33,19 +33,19 @@ export function getDifficultyInfo(difficulty: string | null) {
  * Common cooking units
  */
 export const INGREDIENT_UNITS = [
-  { value: 'g', label: 'g (gramos)' },
-  { value: 'kg', label: 'kg (kilogramos)' },
-  { value: 'ml', label: 'ml (mililitros)' },
-  { value: 'l', label: 'l (litros)' },
-  { value: 'taza', label: 'taza(s)' },
-  { value: 'cucharada', label: 'cucharada(s)' },
-  { value: 'cucharadita', label: 'cucharadita(s)' },
-  { value: 'unidad', label: 'unidad(es)' },
-  { value: 'pizca', label: 'pizca' },
-  { value: 'al gusto', label: 'al gusto' },
-  { value: 'rebanada', label: 'rebanada(s)' },
-  { value: 'diente', label: 'diente(s)' },
-  { value: 'otro', label: 'Otro...' },
+  { value: 'g',           label: 'g (gramos)',      translationKey: 'g' },
+  { value: 'kg',          label: 'kg (kilogramos)', translationKey: 'kg' },
+  { value: 'ml',          label: 'ml (mililitros)', translationKey: 'ml' },
+  { value: 'l',           label: 'l (litros)',      translationKey: 'l' },
+  { value: 'taza',        label: 'taza(s)',         translationKey: 'cup' },
+  { value: 'cucharada',   label: 'cucharada(s)',    translationKey: 'tablespoon' },
+  { value: 'cucharadita', label: 'cucharadita(s)', translationKey: 'teaspoon' },
+  { value: 'unidad',      label: 'unidad(es)',      translationKey: 'unit' },
+  { value: 'pizca',       label: 'pizca',           translationKey: 'pinch' },
+  { value: 'al gusto',    label: 'al gusto',        translationKey: 'toTaste' },
+  { value: 'rebanada',    label: 'rebanada(s)',     translationKey: 'slice' },
+  { value: 'diente',      label: 'diente(s)',       translationKey: 'clove' },
+  { value: 'otro',        label: 'Otro...',         translationKey: 'other' },
 ] as const
 
 export type IngredientUnit = typeof INGREDIENT_UNITS[number]['value']

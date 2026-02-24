@@ -49,6 +49,7 @@ interface RecipeIngredientsProps {
 export function RecipeIngredients({ form }: RecipeIngredientsProps) {
   const t = useTranslations('recipeForm')
   const tc = useTranslations('common')
+  const tu = useTranslations('units')
 
   const {
     fields: ingredientFields,
@@ -140,7 +141,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                         <SelectContent>
                           {INGREDIENT_UNITS.map((unit) => (
                             <SelectItem key={unit.value} value={unit.value}>
-                              {unit.label}
+                              {tu(unit.translationKey)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -193,7 +194,7 @@ export function RecipeIngredients({ form }: RecipeIngredientsProps) {
                         <SelectContent>
                           {INGREDIENT_UNITS.map((unit) => (
                             <SelectItem key={unit.value} value={unit.value}>
-                              {unit.label}
+                              {tu(unit.translationKey)}
                             </SelectItem>
                           ))}
                         </SelectContent>

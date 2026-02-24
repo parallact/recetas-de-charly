@@ -103,6 +103,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     revalidatePath(`/recipes/${recipeId}`)
     revalidatePath('/my-recipes')
+    revalidatePath('/recipes')
+    revalidatePath('/recipes', 'layout')
 
     return NextResponse.json({ success: true })
   } catch (err) {
