@@ -177,7 +177,7 @@ export default async function RecipesPage({
         </div>
       ) : (
         <>
-        <StaggerContainer staggerDelay={0.08} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StaggerContainer key={categorySlug ?? 'all'} staggerDelay={0.08} className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recipes.map((recipe) => (
             <StaggerItem key={recipe.id}>
               <RecipeCard
