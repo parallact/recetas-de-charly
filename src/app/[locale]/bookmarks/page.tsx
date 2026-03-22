@@ -79,7 +79,7 @@ export default function BookmarksPage() {
     }
 
     loadBookmarks()
-  }, [session, status, router, t, ta])
+  }, [session, status, router, t, ta, te])
 
   const confirmRemoveBookmark = async () => {
     if (!deleteBookmarkId) return

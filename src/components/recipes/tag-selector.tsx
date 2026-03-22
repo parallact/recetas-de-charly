@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,22 +44,14 @@ export function TagSelector({
   serverTags,
 }: TagSelectorProps) {
   const [tags, setTags] = useState<TagData[]>(serverTags || [])
-  const [isLoading, setIsLoading] = useState(!serverTags || serverTags.length === 0)
+  // serverTags come from Server Component — loading is always false when they arrive
+  const isLoading = false
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showInput, setShowInput] = useState(false)
   const t = useTranslations('tags')
   const tc = useTranslations('common')
   const te = useTranslations('serverErrors')
-
-  // Tags are loaded from server via Server Component props
-  useEffect(() => {
-    if (serverTags && serverTags.length > 0) {
-      setIsLoading(false)
-    } else {
-      setIsLoading(false)
-    }
-  }, [serverTags])
 
   const toggleTag = useCallback((tagId: string) => {
     if (selectedTags.includes(tagId)) {

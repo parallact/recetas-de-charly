@@ -6,7 +6,7 @@ import { requireAuth } from './utils'
 import { handleActionError, isPrismaError } from './error-utils'
 import { recipeInputSchema, type RecipeApiInput } from '@/lib/schemas/recipe-api'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
 
 // --- Shared transaction helpers ---

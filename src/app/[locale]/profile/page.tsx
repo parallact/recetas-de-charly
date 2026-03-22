@@ -149,7 +149,7 @@ export default function ProfilePage() {
     }
 
     loadProfile()
-  }, [session, status, router, formReset, ta, t])
+  }, [session, status, router, formReset, ta, t, te])
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
     if (!profile) return
@@ -177,7 +177,7 @@ export default function ProfilePage() {
     }
 
     setSaving(false)
-  }, [profile, router, t])
+  }, [profile, router, t, te])
 
   if (loading || status === 'loading') {
     return (

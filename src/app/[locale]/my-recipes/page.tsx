@@ -82,7 +82,7 @@ export default function MyRecipesPage() {
     }
 
     setLoading(false)
-  }, [session, status, router, ta])
+  }, [session, status, router, ta, t, te])
 
   useEffect(() => {
     loadRecipes()
