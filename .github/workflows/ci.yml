@@ -16,5 +16,5 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci --legacy-peer-deps
-      - run: npm run lint || echo "::warning::Lint has errors (non-blocking)"
+      - run: npm run lint
       - run: npm run build

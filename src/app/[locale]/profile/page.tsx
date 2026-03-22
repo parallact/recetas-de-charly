@@ -149,7 +149,7 @@ export default function ProfilePage() {
     }
 
     loadProfile()
-  }, [session, status, router, formReset, ta, t])
+  }, [session, status, router, formReset, ta, t, te])
 
   const onSubmit = useCallback(async (data: ProfileFormData) => {
     if (!profile) return

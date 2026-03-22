@@ -62,11 +62,7 @@ export function EditRecipeClient({ recipe, categories, tags }: EditRecipeClientP
     }
   }, [session, status, router, ta])
 
-  if (status === 'loading' || !session?.user) {
-    return null
-  }
-
-  // Process ingredients
+  // Process ingredients (before hooks guard)
   const ingredients = (recipe.recipe_ingredients || []).map((ri) => {
     const isCustomUnit = ri.unit && !INGREDIENT_UNITS.find(u => u.value === ri.unit)
     return {
@@ -98,6 +94,10 @@ export function EditRecipeClient({ recipe, categories, tags }: EditRecipeClientP
     instructions: instructions.length > 0 ? instructions : [{ content: '' }],
     categoryIds,
   }), [recipe]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (status === 'loading' || !session?.user) {
+    return null
+  }
 
   return (
     <RecipeForm
