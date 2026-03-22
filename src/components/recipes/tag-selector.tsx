@@ -45,7 +45,7 @@ export function TagSelector({
 }: TagSelectorProps) {
   const [tags, setTags] = useState<TagData[]>(serverTags || [])
   // serverTags come from Server Component — loading is always false when they arrive
-  const [isLoading, setIsLoading] = useState(false)
+  const isLoading = false
   const [newTagName, setNewTagName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showInput, setShowInput] = useState(false)
