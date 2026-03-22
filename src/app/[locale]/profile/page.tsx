@@ -177,7 +177,7 @@ export default function ProfilePage() {
     }
 
     setSaving(false)
-  }, [profile, router, t])
+  }, [profile, router, t, te])
 
   if (loading || status === 'loading') {
     return (

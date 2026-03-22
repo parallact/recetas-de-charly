@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { useSession } from 'next-auth/react'
@@ -81,8 +81,7 @@ export function EditRecipeClient({ recipe, categories, tags }: EditRecipeClientP
   const categoryIds = (recipe.recipe_categories || []).map((rc) => rc.category_id)
   const tagIds = (recipe.recipe_tags || []).map((rt) => rt.tag_id)
 
-  // Memoized so form.reset doesn't fire on every re-render (e.g. session refresh)
-  const initialData = useMemo<RecipeFormData>(() => ({
+  const initialData: RecipeFormData = {
     title: recipe.title,
     description: recipe.description || '',
     imageUrl: recipe.image_url || '',
@@ -93,7 +92,7 @@ export function EditRecipeClient({ recipe, categories, tags }: EditRecipeClientP
     ingredients: ingredients.length > 0 ? ingredients : [{ name: '', quantity: '', unit: '', customUnit: '' }],
     instructions: instructions.length > 0 ? instructions : [{ content: '' }],
     categoryIds,
-  }), [recipe]) // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   if (status === 'loading' || !session?.user) {
     return null
