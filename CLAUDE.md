@@ -2,16 +2,18 @@
 
 ## Project Overview
 
-Recipe sharing app built with Next.js 15 (App Router), Supabase, and shadcn/ui.
+Recipe sharing app built with Next.js 16 (App Router), Neon PostgreSQL + Prisma, NextAuth, and shadcn/ui.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
+- **Framework**: Next.js 16 with App Router
+- **Database**: Neon (PostgreSQL serverless) via Prisma 7 (`@prisma/adapter-pg`)
+- **Auth**: NextAuth v5 (credentials + Google OAuth, email verification via Nodemailer)
+- **Image storage**: Cloudflare R2 (S3 compatible, `@aws-sdk/client-s3`)
+- **i18n**: next-intl (es / en)
 - **Styling**: Tailwind CSS v4 + shadcn/ui
 - **Language**: TypeScript
-- **Forms**: React Hook Form + Zod (when needed)
+- **Forms**: React Hook Form + Zod
 
 ## Project Structure
 
@@ -27,18 +29,24 @@ src/
 │   └── ui/                # shadcn/ui components
 ├── lib/                   # Everything else (utilities, hooks, types)
 │   ├── actions/           # ServerActions pattern + types
-│   ├── auth/              # Auth utilities (get-user.ts)
+│   ├── auth/              # Auth utilities (get-user.ts, auth-context.tsx)
+│   ├── email/             # Nodemailer (mailer.ts, templates.ts)
 │   ├── hooks/             # React hooks
-│   ├── supabase/          # Supabase clients (client.ts, server.ts)
+│   ├── prisma.ts          # Prisma client singleton
+│   ├── r2.ts              # Cloudflare R2 (S3) client
 │   ├── types/             # TypeScript types (database, actions)
 │   └── utils/             # General utilities (cn.ts)
-└── middleware.ts          # Next.js middleware
+├── i18n/                  # next-intl routing + request config
+├── auth.ts                # NextAuth config
+└── proxy.ts               # Next.js middleware (locale + protected routes)
 ```
+
+Otras carpetas top-level: `prisma/` (esquema + seed), `messages/` (es.json, en.json).
 
 **Arquitectura de 3 carpetas principales:**
 - `app/` - Paginas y rutas
 - `components/` - Componentes React
-- `lib/` - Todo lo demas (hooks, types, utils, supabase, actions)
+- `lib/` - Todo lo demas (prisma, r2, email, hooks, types, utils, actions)
 
 ---
 
@@ -183,31 +191,23 @@ export async function createRecipeAction(data: FormData): Promise<ServerActionRe
 
 ---
 
-## Supabase Clients
+## Database (Prisma)
 
-### Server Components
+Access the database through the shared Prisma client. There is no browser DB
+client — all queries run server-side (server components, server actions, route
+handlers).
+
 ```tsx
-import { createClient } from '@/lib/supabase/server'
+import { prisma } from '@/lib/prisma'
 
 async function getData() {
-  const supabase = await createClient()
-  if (!supabase) return null
-
-  const { data } = await supabase.from('recipes').select('*')
-  return data
+  return prisma.recipes.findMany({ where: { is_public: true } })
 }
 ```
 
-### Client Components
-```tsx
-'use client'
-import { createClient } from '@/lib/supabase/client'
-
-function Component() {
-  const supabase = createClient()
-  // Use for real-time subscriptions, auth state changes
-}
-```
+The schema lives in `prisma/schema.prisma`; regenerate the client with
+`npx prisma generate` and sync the schema with `npx prisma db push` (or a
+migration).
 
 ---
 
@@ -219,8 +219,8 @@ function Component() {
 | ServerActionResult | `@/lib/types` or `@/lib/actions` |
 | useServerAction | `@/lib/hooks` |
 | ServerActions component | `@/lib/actions` |
-| Supabase server client | `@/lib/supabase/server` |
-| Supabase browser client | `@/lib/supabase/client` |
+| Prisma client | `@/lib/prisma` |
+| R2 (S3) client | `@/lib/r2` |
 | getUser (SSR auth) | `@/lib/auth/get-user` |
 | cn (Tailwind utility) | `@/lib/utils` |
 
@@ -298,25 +298,23 @@ Using Tailwind CSS v4. Container centering:
 3. Use `useServerAction` hook in client or `ServerActions` in server
 
 ### Adding a Database Table
-1. Create migration in `supabase/migrations/`
-2. Update types in `src/lib/types/database.ts`
-3. Add RLS policies
+1. Add the model to `prisma/schema.prisma`
+2. Run `npx prisma generate` and `npx prisma db push`
+3. Update/derive types in `src/lib/types/database.ts` if needed
 
 ---
 
 ## Environment Variables
 
-Required in `.env.local`:
+Required in `.env.local` (see the README for the full table):
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+DATABASE_URL=              # Neon PostgreSQL
+AUTH_SECRET=               # NextAuth secret
+NEXT_PUBLIC_APP_URL=       # e.g. http://localhost:3000
+R2_ACCOUNT_ID=
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=
+R2_BUCKET_NAME=
+R2_PUBLIC_URL=
+# Optional: SMTP_* (email verification), GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
 ```
-
----
-
-## Supabase MCP
-
-**IMPORTANTE:** Siempre usar el MCP de Supabase para interactuar con la base de datos (queries, migraciones, etc). NO usar el CLI de Supabase ni comandos bash.
-
-- Si el MCP no esta conectado, informar al usuario
-- Config en `.mcp.json` con project_ref: `jzqippyffpiielyqhyyg`
