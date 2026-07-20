@@ -4,6 +4,8 @@ import Google from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { sanitizeEmail } from '@/lib/validators/email'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -17,13 +19,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null
         }
 
-        const email = credentials.email as string
+        const email = sanitizeEmail(credentials.email as string)
         const password = credentials.password as string
+
+        // Brute-force protection enforced on the real auth path. The
+        // loginUser() pre-check can be bypassed by calling signIn() directly,
+        // so the limiter must live here too. Keyed on the submitted email and,
+        // when available, the client IP.
+        const forwardedFor = request?.headers?.get?.('x-forwarded-for') ?? ''
+        const clientIp = forwardedFor.split(',')[0]?.trim() || 'unknown'
+        if (!checkRateLimit(`authorize:${email}`, 5, 15 * 60 * 1000)) {
+          return null
+        }
+        if (!checkRateLimit(`authorize-ip:${clientIp}`, 20, 15 * 60 * 1000)) {
+          return null
+        }
 
         // Find user by email
         const user = await prisma.users.findUnique({
