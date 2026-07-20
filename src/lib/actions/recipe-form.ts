@@ -75,16 +75,30 @@ async function createRecipeCategories(
 async function createRecipeTags(
   tx: Tx,
   recipeId: string,
-  tagIds: string[]
+  tagIds: string[],
+  userId: string
 ) {
-  if (tagIds.length > 0) {
-    await tx.recipe_tags.createMany({
-      data: tagIds.map(tagId => ({
-        recipe_id: recipeId,
-        tag_id: tagId,
-      }))
-    })
-  }
+  if (tagIds.length === 0) return
+
+  // Defense in depth: only attach tags the caller is allowed to use — their
+  // own tags or shared default tags. Prevents linking recipes to another
+  // user's private tags via a crafted tag_ids payload.
+  const allowedTags = await tx.tags.findMany({
+    where: {
+      id: { in: tagIds },
+      OR: [{ user_id: userId }, { is_default: true, user_id: null }],
+    },
+    select: { id: true },
+  })
+
+  if (allowedTags.length === 0) return
+
+  await tx.recipe_tags.createMany({
+    data: allowedTags.map(({ id }) => ({
+      recipe_id: recipeId,
+      tag_id: id,
+    })),
+  })
 }
 
 // --- Public actions ---
@@ -122,7 +136,7 @@ export async function createRecipe(input: RecipeApiInput) {
       await upsertRecipeIngredients(tx, recipe.id, data.ingredients)
       await createRecipeInstructions(tx, recipe.id, data.instructions)
       await createRecipeCategories(tx, recipe.id, data.category_ids)
-      await createRecipeTags(tx, recipe.id, data.tag_ids)
+      await createRecipeTags(tx, recipe.id, data.tag_ids, user.id)
 
       return recipe.id
     })
@@ -187,7 +201,7 @@ export async function updateRecipe(recipeId: string, input: RecipeApiInput) {
       await upsertRecipeIngredients(tx, recipeId, data.ingredients)
       await createRecipeInstructions(tx, recipeId, data.instructions)
       await createRecipeCategories(tx, recipeId, data.category_ids)
-      await createRecipeTags(tx, recipeId, data.tag_ids)
+      await createRecipeTags(tx, recipeId, data.tag_ids, user.id)
     })
 
     revalidatePath(`/recipes/${recipeId}`)

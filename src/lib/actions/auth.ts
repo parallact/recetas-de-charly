@@ -111,7 +111,11 @@ export async function registerUser(
     })
 
     if (existingUser) {
-      return { success: false, error: 'emailTaken' }
+      // Do not reveal that the email is already registered (account
+      // enumeration). Return the same generic response as a fresh signup,
+      // mirroring the reset/resend flows. The per-email rate limit above
+      // still throttles probing attempts.
+      return { success: true, requiresVerification: true }
     }
 
     // Hash password (trimmed)
@@ -168,11 +172,14 @@ export async function registerUser(
 
 export async function requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!checkRateLimit(`reset:${email}`, 3, 60 * 60 * 1000)) {
+    const cleanEmail = sanitizeEmail(email)
+
+    // Key the limiter on the sanitized address so case/whitespace variants
+    // collapse into one bucket (matches loginUser/registerUser).
+    if (!checkRateLimit(`reset:${cleanEmail}`, 3, 60 * 60 * 1000)) {
       return { success: false, error: 'resetRateLimit' }
     }
 
-    const cleanEmail = sanitizeEmail(email)
     const emailError = getEmailError(cleanEmail)
     if (emailError) {
       // Return success anyway to not reveal if email exists
